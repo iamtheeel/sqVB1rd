@@ -1,0 +1,57 @@
+sqb_main.c.Users.theeel.Documents.school.ENGR_859.termProject.sqVB1rd.sqb.o: \
+ sqb_main.c /Users/theeel/spresense/nuttx/include/nuttx/config.h \
+ /Users/theeel/spresense/nuttx/include/stdio.h \
+ /Users/theeel/spresense/nuttx/include/sys/types.h \
+ /Users/theeel/spresense/nuttx/include/nuttx/compiler.h \
+ /Users/theeel/spresense/nuttx/include/stdint.h \
+ /Users/theeel/spresense/nuttx/include/arch/types.h \
+ /Users/theeel/spresense/nuttx/include/arch/inttypes.h \
+ /Users/theeel/spresense/nuttx/include/limits.h \
+ /Users/theeel/spresense/nuttx/include/arch/limits.h \
+ /Users/theeel/spresenseenv/usr/lib/gcc/arm-none-eabi/10.3.1/include/stdarg.h \
+ /Users/theeel/spresense/nuttx/include/time.h \
+ /Users/theeel/spresense/nuttx/include/nuttx/fs/fs.h \
+ /Users/theeel/spresense/nuttx/include/stdbool.h \
+ /Users/theeel/spresense/nuttx/include/dirent.h \
+ /Users/theeel/spresense/nuttx/include/nuttx/mutex.h \
+ /Users/theeel/spresense/nuttx/include/assert.h \
+ /Users/theeel/spresense/nuttx/include/nuttx/semaphore.h \
+ /Users/theeel/spresense/nuttx/include/errno.h \
+ /Users/theeel/spresense/nuttx/include/semaphore.h \
+ /Users/theeel/spresense/nuttx/include/nuttx/queue.h \
+ /Users/theeel/spresense/nuttx/include/nuttx/clock.h \
+ /Users/theeel/spresense/nuttx/include/nuttx/mm/map.h \
+ /Users/theeel/spresense/nuttx/include/nuttx/mm/gran.h \
+ /Users/theeel/spresense/nuttx/include/nuttx/lib/lib.h \
+ /Users/theeel/spresense/nuttx/include/nuttx/kmalloc.h \
+ /Users/theeel/spresense/nuttx/include/stdlib.h \
+ /Users/theeel/spresense/nuttx/include/nuttx/mm/mm.h \
+ /Users/theeel/spresense/nuttx/include/nuttx/addrenv.h \
+ /Users/theeel/spresense/nuttx/include/nuttx/wqueue.h \
+ /Users/theeel/spresense/nuttx/include/nuttx/wdog.h \
+ /Users/theeel/spresense/nuttx/include/arch/arch.h \
+ /Users/theeel/spresense/nuttx/include/nuttx/pgalloc.h \
+ /Users/theeel/spresense/nuttx/include/nuttx/userspace.h \
+ /Users/theeel/spresense/nuttx/include/signal.h \
+ /Users/theeel/spresense/nuttx/include/pthread.h \
+ /Users/theeel/spresense/nuttx/include/unistd.h \
+ /Users/theeel/spresense/nuttx/include/nuttx/arch.h \
+ /Users/theeel/spresense/nuttx/include/nuttx/cache.h \
+ /Users/theeel/spresense/nuttx/include/nuttx/sched.h \
+ /Users/theeel/spresense/nuttx/include/sched.h \
+ /Users/theeel/spresense/nuttx/include/strings.h \
+ /Users/theeel/spresense/nuttx/include/string.h \
+ /Users/theeel/spresense/nuttx/include/stddef.h \
+ /Users/theeel/spresense/nuttx/include/alloca.h \
+ /Users/theeel/spresense/nuttx/include/nuttx/irq.h \
+ /Users/theeel/spresense/nuttx/include/arch/irq.h \
+ /Users/theeel/spresense/nuttx/include/arch/chip/irq.h \
+ /Users/theeel/spresense/nuttx/include/arch/armv7-m/irq.h \
+ /Users/theeel/spresense/nuttx/include/arch/armv7-m/nvicpri.h \
+ /Users/theeel/spresense/nuttx/include/arch/chip/chip.h \
+ /Users/theeel/spresense/nuttx/include/nuttx/net/net.h \
+ /Users/theeel/spresense/nuttx/include/sys/socket.h \
+ /Users/theeel/spresense/nuttx/include/sys/uio.h \
+ /Users/theeel/spresense/nuttx/include/malloc.h
+# No files specified for dependency generation
+# No files specified for dependency generation
