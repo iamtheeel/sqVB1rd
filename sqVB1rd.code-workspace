@@ -18,6 +18,21 @@
 		"spresense.env.toolchain.path": "/Users/theeel/spresenseenv/usr/bin",
 		"cortex-debug.armToolchainPath": "/Users/theeel/spresenseenv/usr/bin",
 		"cortex-debug.openocdPath": "/Users/theeel/spresenseenv/usr/bin/openocd",
-		"spresense.env.extension.path": "/Users/theeel/.vscode/extensions/sony-spresense.spresense-vscode-ide-1.5.100"
+		"spresense.env.extension.path": "/Users/theeel/.vscode/extensions/sony-spresense.spresense-vscode-ide-1.5.100",
+		"files.associations": {
+			"cardutils.h": "c",
+			"main_functions.h": "c",
+			"spresense_image_provider.h": "c",
+			"dsc_file.h": "c",
+			"cxd56_imageproc.h": "c",
+			"micro_error_reporter.h": "c",
+			"cstdarg": "cpp",
+			"micro_interpreter.h": "c",
+			"cstdint": "cpp",
+			"runtime_client.h": "c",
+			"runtime.h": "c",
+			"loader_tflite.h": "c",
+			"pnm_util.h": "c"
+		}
 	}
 }

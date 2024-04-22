@@ -8,7 +8,8 @@ sqVB1rd_main.c.Users.theeel.Documents.school.ENGR_859.termProject.sqVB1rd.sqVB1r
  /Users/theeel/spresense/nuttx/include/arch/inttypes.h \
  /Users/theeel/spresense/nuttx/include/limits.h \
  /Users/theeel/spresense/nuttx/include/arch/limits.h \
- /Users/theeel/spresenseenv/usr/lib/gcc/arm-none-eabi/10.3.1/include/stdarg.h \
+ /Users/theeel/spresense/nuttx/include/stdarg.h \
+ /Users/theeel/spresense/nuttx/include/arch/stdarg.h \
  /Users/theeel/spresense/nuttx/include/time.h \
  /Users/theeel/spresense/nuttx/include/nuttx/fs/fs.h \
  /Users/theeel/spresense/nuttx/include/stdbool.h \

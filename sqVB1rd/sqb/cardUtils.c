@@ -203,3 +203,6 @@ int file_writeimage(uint8_t *data, size_t len)
   //Josh: return the file image name... oh, just return the image number
   return (g_image_cnt - 1);
 }
+
+
+// Mount Card
