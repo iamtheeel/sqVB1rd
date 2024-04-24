@@ -1,0 +1,15 @@
+From Sony:
+    Arduino Sprense Board\
+        Board Manager
+
+From:
+https://www.hackster.io/taroyoshino007/get-started-with-tensorflow-lite-micro-by-sony-spresense-e92bf1#toc-setup-the-environment-for-arduino-sketch-3
+    Suspresce TensorFlow Board https://raw.githubusercontent.com/YoshinoTaro/spresense-arduino-tensorflow/main/package_spresense_tensorflow_index.json
+        Use board manager
+
+    BmpImage_ArduinoLib
+        Git clode into Arduino/libraryhs
+
+From
+https://github.com/bitbank2/JPEGENC
+    Arduino lib manager
