@@ -18,10 +18,5 @@
  * ----------------------------------------------------------------------------
  */
 
-#ifndef __SQB_CAMERA_H__
-#define __SQB_CAMERA_H__
-
-//void printError(enum CamErr err);
-
-
-#endif
+ #include "sqbCamera.h"
+ 

@@ -22,14 +22,16 @@
 #include <SDHCI.h> // SD Card
 
 // TensorFlow Light
-#include "tensorflow/lite/micro/all_ops_resolver.h"
-#include "tensorflow/lite/micro/micro_error_reporter.h"
+#include "tensorflow/lite/micro/micro_mutable_op_resolver.h"
+//#include "tensorflow/lite/micro/micro_error_reporter.h" // Using err from MIL SPRESENS_TensorFlow Board
 #include "tensorflow/lite/micro/micro_interpreter.h"
 #include "tensorflow/lite/micro/system_setup.h"
 #include "tensorflow/lite/schema/schema_generated.h"
+#include "tensorflow/lite/micro/spresense/debug_log_callback.h"
+
 
 // Self
-#include "sqbCamera.h"
+//#include "sqbCamera.h"
 
 // Main Board Pins
 const uint8_t safeMode_pin = 1; //D1 (UART2_TX) Safe Boot
@@ -43,7 +45,7 @@ const uint8_t heartBeat_pin = LED0;
 // LED3
 
 
-/*      Timing       */
+/***      Timing       ***/
 // Heartbeat
 int runFreq = 250; // Hz
 unsigned long delayTime_us = 1e6/runFreq;
@@ -53,26 +55,49 @@ unsigned long miliSecTaskClock = 0;
 unsigned long uSSystemTaskClock = 0;
 byte taskClockCycles25Hz = 0, taskClockCycles10Hz = 0, taskClockCycles5Hz, taskClockCycles1Hz = 0;
 
-/*    Serial    */
+/***    Serial    ***/
 #define BAUDRATE (921600)
 
 
-/*    Camera    */
-const int vWidth = CAM_IMGSIZE_QVGA_H, vHeight = CAM_IMGSIZE_QVGA_V; // Works
-//const int vWidth = CAM_IMGSIZE_VGA_H, vHeight = CAM_IMGSIZE_VGA_H; // Does not like
-//const int iWidth = CAM_IMGSIZE_VGA_H, iHeight = CAM_IMGSIZE_VGA_V; // 
-const int iWidth = CAM_IMGSIZE_QUADVGA_H, iHeight = CAM_IMGSIZE_QUADVGA_V; // Max with jpeg
-//const int iWidth = CAM_IMGSIZE_FULLHD_H, iHeight = CAM_IMGSIZE_FULLHD_V; // Memory Error
+/***    Camera    ***/
 #define JPGQUAL (90)
 
+//const int iWidth = 96, iHeight = 96; // 
+//const int iWidth = CAM_IMGSIZE_QQVGA_H, iHeight = CAM_IMGSIZE_QQVGA_V; // Works
+//const int iWidth = CAM_IMGSIZE_QVGA_H, iHeight = CAM_IMGSIZE_QVGA_V; //
+const int iWidth = CAM_IMGSIZE_VGA_H, iHeight = CAM_IMGSIZE_VGA_V; // 
+//const int iWidth = CAM_IMGSIZE_QUADVGA_H, iHeight = CAM_IMGSIZE_QUADVGA_V; // Max with jpeg, Errored when I have the model going
+//const int iWidth = CAM_IMGSIZE_FULLHD_H, iHeight = CAM_IMGSIZE_FULLHD_V; // Memory Error, even with 1.5M
 
-/*      File System     */
+
+/***      File System     ***/
 SDClass  theSD;
 int take_picture_count = 0;
 
 
-/*   For Streaming to serial */
-//JPEGENC jpgenc;
+/***      The Model      ***/
+//#include "model.h"
+#include "leNetV5.h"
+
+// Image Size for ML
+//const int vWidth = 48, vHeight = 48; // Does not like 48x48
+const int vWidth = 96, vHeight = 96; // 
+//const int vWidth = CAM_IMGSIZE_QQVGA_H, vHeight = CAM_IMGSIZE_QQVGA_V; // 
+//const int vWidth = CAM_IMGSIZE_QVGA_H, vHeight = CAM_IMGSIZE_QVGA_V; // 
+//const int vWidth = CAM_IMGSIZE_VGA_H, vHeight = CAM_IMGSIZE_VGA_H; // 
+
+tflite::ErrorReporter* error_reporter = nullptr;
+const tflite::Model* model = nullptr;
+tflite::MicroInterpreter* interpreter = nullptr;
+TfLiteTensor* input = nullptr;
+TfLiteTensor* output = nullptr;
+int inference_count = 0;
+
+//constexpr int kTensorArenaSize = 350000;
+constexpr int kTensorArenaSize = 75000;
+
+uint8_t tensor_arena[kTensorArenaSize];
+
 
 void setup() {
   // Safe Mode Pin setups
@@ -80,7 +105,6 @@ void setup() {
   pinMode(heartBeat_pin, OUTPUT); //LED_BUILTIN
 
   // Serial Port (USB)
-  //Serial.begin(115200);
   Serial.begin(BAUDRATE);
   while (!Serial) {;}  // wait for serial port to connect. Needed for native USB port only 
 
@@ -95,38 +119,94 @@ void setup() {
     // Main Setups
     Serial.println((String) "Start Up: Normal Mode");
 
-    // SD Card
-      /* Initialize SD */
+    /***      Initialize SD     ***/
     while (!theSD.begin()) 
     {
-       /* wait until SD card is mounted. */
+       //wait until SD card is mounted.
        Serial.println("Insert SD card.");
        delay(500);
     }
     Serial.println("SD card Mounted.");
-
-    // Jpeg setup
     
 
-    // Camera setup // Move to seperate file
+    /***             Model setup  From Spresense_tf_mnist            ***/
+    tflite::InitializeTarget();
+    Serial.println((String)"Alocate Areana: " + kTensorArenaSize*sizeof(uint8_t));
+    memset(tensor_arena, 0, kTensorArenaSize*sizeof(uint8_t));
+  
+
+    // Model Error Reporting
+    Serial.println((String)"Set up ML Error Reporting");
+    tflite::ErrorReporter* error_reporter = nullptr;
+
+    // Map the model into a usable data structure..
+    model = tflite::GetModel(leNetV5_tflite);
+    //model = tflite::GetModel(model_tflite);
+    if (model->version() != TFLITE_SCHEMA_VERSION) {
+      Serial.println("Model provided is schema version " 
+                    + String(model->version()) + " not equal "
+                    + "to supported version "
+                    + String(TFLITE_SCHEMA_VERSION));
+      return;
+    } else {
+      Serial.println("Model version: " + String(model->version()));
+    }
+
+    // This pulls in all the operation implementations we need.
+     Serial.println((String)"Start resolver: ");
+    //static tflite::AllOpsResolver resolver;
+    static tflite::MicroMutableOpResolver<8> resolver; // The number of adds
+    resolver.AddMaxPool2D();
+    resolver.AddConv2D();
+    resolver.AddRelu();
+    resolver.AddTranspose();
+    resolver.AddPad();
+    resolver.AddReshape();
+    resolver.AddFullyConnected();
+    resolver.AddDequantize();
+    RegisterDebugLogCallback(debug_log_printf);
+
+    
+    // Build an interpreter to run the model with.
+    Serial.println((String)"Alocate Interpriter: ");
+    static tflite::MicroInterpreter static_interpreter(
+        model, resolver, tensor_arena, kTensorArenaSize);//, error_reporter);
+    interpreter = &static_interpreter;
+    
+    // Allocate memory from the tensor_arena for the model's tensors.
+    Serial.println((String)"Alocate Tensors: ");
+    TfLiteStatus allocate_status = interpreter->AllocateTensors();
+    if (allocate_status != kTfLiteOk) {
+      Serial.println("AllocateTensors() failed");
+      return;
+    } else {
+      Serial.println("AllocateTensor() Success");
+    }
+
+    size_t used_size = interpreter->arena_used_bytes();
+    Serial.println("Arnea used bytes: " + String(used_size));
+    input = interpreter->input(0);
+    output = interpreter->output(0);
+
+
+    /***             Camera setup              ***/ //Move to seperate file
+    // Init the camera after the model so we can test the memory
     CamErr err;
     //CameraClass theCamera(); it's already there and named "theCamera"
-    
     Serial.println("Prepare camera");
-
     // From Sony camera example
-    Serial.println((String)"Set video format: w =" + vWidth + ", h = " + vHeight); // add the FPS
+    Serial.println((String)"Set video format: w = " + vWidth + ", h = " + vHeight); // add the FPS
     // Video streem to the ML: 5 FPS is as slow as we can go
-    //err = theCamera.begin(); //begin() without parameters means that number of buffers = 1, 30FPS, QVGA, YUV 4:2:2 format
-    err = theCamera.begin(1, CAM_VIDEO_FPS_5, vWidth, vHeight, CAM_IMAGE_PIX_FMT_RGB565, 7); // Init video stream to tiny
+    err = theCamera.begin(1, CAM_VIDEO_FPS_5, vWidth, vHeight, CAM_IMAGE_PIX_FMT_RGB565); // Settings we want for the ML Network
     //err = theCamera.begin(1, CAM_VIDEO_FPS_5, vWidth, vHeight, CAM_IMAGE_PIX_FMT_YUV422, 7); // Init video stream to tiny
-    if (err != CAM_ERR_SUCCESS)    {      printError(err);    }
+    if (err != CAM_ERR_SUCCESS){printError(err);}
     
-
+    // Which camera we got?
     int sensor = theCamera.getDeviceType(); // Begin before asking
     Serial.println((String)"Sensor: " + sensor); // sensor = 1
     
-    Serial.println("Start streaming"); // Not interested in video
+    // Start the video and register the callback
+    Serial.println("Start streaming"); 
     err = theCamera.startStreaming(true, CamCB);
     if (err != CAM_ERR_SUCCESS){printError(err);}
     
@@ -135,18 +215,19 @@ void setup() {
     err = theCamera.setAutoWhiteBalanceMode(CAM_WHITE_BALANCE_DAYLIGHT);
     if (err != CAM_ERR_SUCCESS){printError(err);}
 
+    //ISO
+
+
     // Still picture for save and to send to serial
-    // Dumps core if this has higher res than the video?
-    //err = theCamera.create_stillbuff(iWidth,iHeight,CAM_IMAGE_PIX_FMT_YUV422, 7);
     Serial.println((String)"Set still picture format: w =" + iWidth + ", h = " + iHeight);
-    //err = theCamera.setStillPictureImageFormat(iWidth,iHeight, CAM_IMAGE_PIX_FMT_YUV422); // Convert doees not like CAM_IMAGE_PIX_FMT_RGB565 --> CAM_IMAGE_PIX_FMT_JPG
-    //err = theCamera.setStillPictureImageFormat(iWidth, iHeight, CAM_IMAGE_PIX_FMT_RGB565); // TF Wants RGB565
-    err = theCamera.setStillPictureImageFormat(iWidth, iHeight, CAM_IMAGE_PIX_FMT_JPG);
+    err = theCamera.setStillPictureImageFormat(iWidth, iHeight, CAM_IMAGE_PIX_FMT_JPG, 1); // JPEG Divisor requests less memory assuming good compresion
     if (err != CAM_ERR_SUCCESS){printError(err);}
+
     Serial.println((String)"Set JPEG Quality: " + JPGQUAL);
     err = theCamera.setJPEGQuality(JPGQUAL); // 95 Too much, 90 ok, : At QuadVGA
     if (err != CAM_ERR_SUCCESS){printError(err);}
-  }
+ 
+  } // END SafeBoot
 }
 
 
@@ -178,27 +259,32 @@ if(miliSec - miliSecTaskClock >=10) // 100Hz loop
       taskClockCycles25Hz = 0;
 
       if(safeBoot) {heartBeat(heartBeat_pin);}
+      //else{}
     }
     if (taskClockCycles10Hz == 10) // 10Hz 
     {
       taskClockCycles10Hz = 0;
+      //if(!safeBoot) {Serial.println((String) "High Mom: " + foo++);}
     }
     if (taskClockCycles5Hz == 20) // 5Hz 
     {
       taskClockCycles5Hz = 0;
 
-      if(!safeBoot) {heartBeat(heartBeat_pin);}
+      if(!safeBoot) {
+        heartBeat(heartBeat_pin);
+      }
+      //else {; }
     }
 
     if (taskClockCycles1Hz == 100) // 1Hz 
     {
       taskClockCycles1Hz = 0;
 
-      //static int foo = 0;
-      //if(!safeBoot) {Serial.println((String) "High Mom: " + foo++);}
+      if(!safeBoot) {
+        getStill();
+      }
 
-      //CamImage img =  theCamera.takePicture();
-      getStill();
+      
     }
 
     taskClockCycles1Hz++;
@@ -217,45 +303,6 @@ void heartBeat(int hbPin)
 }
 
 
-void printError(enum CamErr err)
-{
-  Serial.print("Error: ");
-  switch (err)
-  {
-    case CAM_ERR_NO_DEVICE:
-      Serial.println("No Device");
-      break;
-    case CAM_ERR_ILLEGAL_DEVERR:
-      Serial.println("Illegal device error");
-      break;
-    case CAM_ERR_ALREADY_INITIALIZED:
-      Serial.println("Already initialized");
-      break;
-    case CAM_ERR_NOT_INITIALIZED:
-      Serial.println("Not initialized");
-      break;
-    case CAM_ERR_NOT_STILL_INITIALIZED:
-      Serial.println("Still picture not initialized");
-      break;
-    case CAM_ERR_CANT_CREATE_THREAD:
-      Serial.println("Failed to create thread");
-      break;
-    case CAM_ERR_INVALID_PARAM:
-      Serial.println("Invalid parameter");
-      break;
-    case CAM_ERR_NO_MEMORY:
-      Serial.println("No memory");
-      break;
-    case CAM_ERR_USR_INUSED:
-      Serial.println("Buffer already in use");
-      break;
-    case CAM_ERR_NOT_PERMITTED:
-      Serial.println("Operation not permitted");
-      break;
-    default:
-      break;
-  }
-}
 
 void getStill()
 {
@@ -276,8 +323,7 @@ void getStill()
 
 
     // ********  Save The File  ************//
-    // TODO: Find the highest number already there so we don't overwrite see: cartUtils.c.. makes a NUTX call :(
-    // Save the file number in FLASH
+    // Save 
     char filename[16] = {0};
     do{ 
       sprintf(filename, "DCIM/%05d.JPG", take_picture_count++);    //DCIM/
@@ -303,7 +349,7 @@ void getStill()
      * [How to decrease the size of a picture]
      * - Decrease the JPEG quality by setJPEGQuality()
      */
-    Serial.println("Failed to take picture");
+    Serial.println("Failed to take picture: Mem Allocate Error?");
   }
 }
 
@@ -314,13 +360,17 @@ void CamCB(CamImage img)
   /* Check the img instance is available or not. */
   if (img.isAvailable())
   {
-    
+    //CamImage reSizedImg; // New, smaller image
+    //err = img.resizeImageByHW(reSizedImg, 48, 48); //Damned invalide peram
+    //if (err != CAM_ERR_SUCCESS){printError(err);}
+
     int i, iMCUCount, rc, iDataSize, iSize;
     uint8_t *pBuffer;
     uint8_t* img_buffer = img.getImgBuff();
 
     // tensorflow inference code
 /*
+    // Send the camera buffer to the input stream
     for (int i = 0; i < iWidth * iHeight * 2; ++i) {
       input->data.f[i] = (float)(img_buffer[i]);
     }
@@ -367,4 +417,29 @@ void CamCB(CamImage img)
      */
     Serial.println("Failed to get video stream");
   }
+}
+
+void printError(enum CamErr err)
+{
+  Serial.print("Error: ");
+  switch (err)
+  {
+    case CAM_ERR_NO_DEVICE:             Serial.println("No Device");                      break;
+    case CAM_ERR_ILLEGAL_DEVERR:        Serial.println("Illegal device error");           break;
+    case CAM_ERR_ALREADY_INITIALIZED:   Serial.println("Already initialized");            break;
+    case CAM_ERR_NOT_INITIALIZED:       Serial.println("Not initialized");                break;
+    case CAM_ERR_NOT_STILL_INITIALIZED: Serial.println("Still picture not initialized");  break;
+    case CAM_ERR_CANT_CREATE_THREAD:    Serial.println("Failed to create thread");        break;
+    case CAM_ERR_INVALID_PARAM:         Serial.println("Invalid parameter");              break;
+    case CAM_ERR_NO_MEMORY:             Serial.println("No memory");                      break;
+    case CAM_ERR_USR_INUSED:            Serial.println("Buffer already in use");          break;
+    case CAM_ERR_NOT_PERMITTED:         Serial.println("Operation not permitted");        break;
+    default:                            Serial.println("Unknown Error");                  break;
+  }
+}
+
+void debug_log_printf(const char* s)
+{
+  Serial.print("ERROR:");
+  Serial.println(s);
 }
