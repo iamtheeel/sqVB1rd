@@ -39,10 +39,10 @@ const uint8_t safeMode_pin = 1; //D1 (UART2_TX) Safe Boot
 // Extension Board pins
 
 // Built in Leds
-const uint8_t heartBeat_pin = LED0;
-// LED1
-// LED2
-// LED3
+const uint8_t nobodyLED_pin = LED0;    // 0x40, 64
+const uint8_t birdLED_pin = LED1;      // 0x41, 65
+const uint8_t squirrelLED_pin = LED2;  // 0x42, 66
+const uint8_t heartBeatLED_pin = LED3; // 0x43, 67
 
 
 /***      Timing       ***/
@@ -54,6 +54,8 @@ bool safeBoot = false;
 unsigned long miliSecTaskClock = 0;
 unsigned long uSSystemTaskClock = 0;
 byte taskClockCycles25Hz = 0, taskClockCycles10Hz = 0, taskClockCycles5Hz, taskClockCycles1Hz = 0;
+
+//int everyNthImage = 5; // Slow down, try 1Hz
 
 /***    Serial    ***/
 #define BAUDRATE (921600)
@@ -74,10 +76,14 @@ const int iWidth = CAM_IMGSIZE_VGA_H, iHeight = CAM_IMGSIZE_VGA_V; //
 SDClass  theSD;
 int take_picture_count = 0;
 
+// Logger
+char logFileName[16];
+
 
 /***      The Model      ***/
 //#include "model.h"
 #include "leNetV5.h"
+const int nClasses = 3; // Nothing, Bird, Squirrel
 
 // Image Size for ML
 //const int vWidth = 48, vHeight = 48; // Does not like 48x48
@@ -94,7 +100,7 @@ TfLiteTensor* output = nullptr;
 int inference_count = 0;
 
 //constexpr int kTensorArenaSize = 350000;
-constexpr int kTensorArenaSize = 75000;
+constexpr int kTensorArenaSize = 90000; // arena at boot + imgW*imgH*3
 
 uint8_t tensor_arena[kTensorArenaSize];
 
@@ -102,7 +108,11 @@ uint8_t tensor_arena[kTensorArenaSize];
 void setup() {
   // Safe Mode Pin setups
   pinMode(safeMode_pin, INPUT_PULLUP);     // Safe mode
-  pinMode(heartBeat_pin, OUTPUT); //LED_BUILTIN
+
+  pinMode(nobodyLED_pin, OUTPUT); //LED_BUILTIN
+  pinMode(birdLED_pin, OUTPUT); //LED_BUILTIN
+  pinMode(squirrelLED_pin, OUTPUT); //LED_BUILTIN
+  pinMode(heartBeatLED_pin, OUTPUT); //LED_BUILTIN
 
   // Serial Port (USB)
   Serial.begin(BAUDRATE);
@@ -185,11 +195,25 @@ void setup() {
 
     size_t used_size = interpreter->arena_used_bytes();
     Serial.println("Arnea used bytes: " + String(used_size));
+
     input = interpreter->input(0);
     output = interpreter->output(0);
 
+    /***             Logging setup              ***/ //Move to seperate file
+    int logNum = 0;
+    do{ 
+      sprintf(logFileName, "%i_log.csv", ++logNum);  // Find the next empty file
+    }while(theSD.exists(logFileName));
+
+    Serial.println((String) "Initilising log file: " + logFileName);
+    File myFile = theSD.open(logFileName, FILE_WRITE);
+    myFile.write("FileNum, none, b1rd, squirrl\n");
+    myFile.close();
+
+
 
     /***             Camera setup              ***/ //Move to seperate file
+    // The very last thing in setup is to call startStreaming. This runs the callback
     // Init the camera after the model so we can test the memory
     CamErr err;
     //CameraClass theCamera(); it's already there and named "theCamera"
@@ -197,18 +221,14 @@ void setup() {
     // From Sony camera example
     Serial.println((String)"Set video format: w = " + vWidth + ", h = " + vHeight); // add the FPS
     // Video streem to the ML: 5 FPS is as slow as we can go
+    // RGB 565 is 2 bytes/pixl (R:HB7-HB3, G:HB2-LB5, B: LB4-LB0)
     err = theCamera.begin(1, CAM_VIDEO_FPS_5, vWidth, vHeight, CAM_IMAGE_PIX_FMT_RGB565); // Settings we want for the ML Network
-    //err = theCamera.begin(1, CAM_VIDEO_FPS_5, vWidth, vHeight, CAM_IMAGE_PIX_FMT_YUV422, 7); // Init video stream to tiny
     if (err != CAM_ERR_SUCCESS){printError(err);}
     
     // Which camera we got?
     int sensor = theCamera.getDeviceType(); // Begin before asking
     Serial.println((String)"Sensor: " + sensor); // sensor = 1
     
-    // Start the video and register the callback
-    Serial.println("Start streaming"); 
-    err = theCamera.startStreaming(true, CamCB);
-    if (err != CAM_ERR_SUCCESS){printError(err);}
     
     // Auto white balance configuration //
     Serial.println("Set Auto white balance parameter");
@@ -220,17 +240,25 @@ void setup() {
 
     // Still picture for save and to send to serial
     Serial.println((String)"Set still picture format: w =" + iWidth + ", h = " + iHeight);
-    err = theCamera.setStillPictureImageFormat(iWidth, iHeight, CAM_IMAGE_PIX_FMT_JPG, 1); // JPEG Divisor requests less memory assuming good compresion
+    err = theCamera.setStillPictureImageFormat(iWidth, iHeight, CAM_IMAGE_PIX_FMT_JPG, 1); // JPEG Divisor requests less memory assuming good compresion, 1 = assume full image
     if (err != CAM_ERR_SUCCESS){printError(err);}
 
     Serial.println((String)"Set JPEG Quality: " + JPGQUAL);
     err = theCamera.setJPEGQuality(JPGQUAL); // 95 Too much, 90 ok, : At QuadVGA
     if (err != CAM_ERR_SUCCESS){printError(err);}
  
+
+    // Start the video and register the callback
+    // Do this LAST!
+    Serial.println("Start streaming"); 
+    err = theCamera.startStreaming(true, CamCB);
+    if (err != CAM_ERR_SUCCESS){printError(err);}
+
+
+    /***             Done With Setup              ***/
+    Serial.println((String)"Init Done");
   } // END SafeBoot
 }
-
-
 
 void loop() {
   unsigned long miliSec = millis();
@@ -258,7 +286,7 @@ if(miliSec - miliSecTaskClock >=10) // 100Hz loop
     {
       taskClockCycles25Hz = 0;
 
-      if(safeBoot) {heartBeat(heartBeat_pin);}
+      if(safeBoot) {heartBeat(heartBeatLED_pin);}
       //else{}
     }
     if (taskClockCycles10Hz == 10) // 10Hz 
@@ -271,7 +299,7 @@ if(miliSec - miliSecTaskClock >=10) // 100Hz loop
       taskClockCycles5Hz = 0;
 
       if(!safeBoot) {
-        heartBeat(heartBeat_pin);
+        //heartBeat(heartBeatLED_pin);
       }
       //else {; }
     }
@@ -281,7 +309,7 @@ if(miliSec - miliSecTaskClock >=10) // 100Hz loop
       taskClockCycles1Hz = 0;
 
       if(!safeBoot) {
-        getStill();
+        //getStill();
       }
 
       
@@ -302,9 +330,19 @@ void heartBeat(int hbPin)
   pinState = !pinState;
 }
 
+void setResultsLED(uint8_t detect)
+{
+  // Set everybody off
+  digitalWrite(  nobodyLED_pin, false);
+  digitalWrite(    birdLED_pin, false);
+  digitalWrite(squirrelLED_pin, false);
 
+  // Set our detect on
+  // The pins are all in a row starting with "None"
+  digitalWrite(nobodyLED_pin + detect, true);
+}
 
-void getStill()
+int getStill()
 {
   CamErr err;
   CamImage img =  theCamera.takePicture();
@@ -312,21 +350,19 @@ void getStill()
   /* Check the img instance is available or not. */
   if (img.isAvailable())
   {
-        // ********  Send To JPEG to the Serial Port  ************//
+    // ********  Send To JPEG to the Serial Port  ************//
     //iSize = (int) img.getImgBuffSize();
     int imageSize = img.getImgSize();
-
-    //Serial.println((String)"iSize size: " + iSize);
-    Serial.println((String)"SIZE:" + imageSize);
-    Serial.println((String)"START");
+    //Serial.println((String)"SIZE:" + imageSize);
+    //Serial.println((String)"START");
     //Serial.write(img.getImgBuff(), imageSize);
 
 
     // ********  Save The File  ************//
     // Save 
-    char filename[16] = {0};
+    char filename[30] = {0};
     do{ 
-      sprintf(filename, "DCIM/%05d.JPG", take_picture_count++);    //DCIM/
+      sprintf(filename, "DCIM/%05d.JPG", ++take_picture_count);    //DCIM/
       //Serial.println((String) "Trying: " + filename);
     }while(theSD.exists(filename));
 
@@ -336,7 +372,6 @@ void getStill()
     Serial.println((String) "writing img");
     myFile.write(img.getImgBuff(), img.getImgSize());
     myFile.close();
-    take_picture_count++;
   }
   else
   {
@@ -351,6 +386,8 @@ void getStill()
      */
     Serial.println("Failed to take picture: Mem Allocate Error?");
   }
+
+  return take_picture_count;
 }
 
 void CamCB(CamImage img)
@@ -360,8 +397,9 @@ void CamCB(CamImage img)
   /* Check the img instance is available or not. */
   if (img.isAvailable())
   {
+    digitalWrite(heartBeatLED_pin, true); // Heart Beat when we are thinking
     //CamImage reSizedImg; // New, smaller image
-    //err = img.resizeImageByHW(reSizedImg, 48, 48); //Damned invalide peram
+    //err = img.resizeImageByHW(reSizedImg, 48, 48); //Damned invalide peram, 96x96 seems to be the smallest
     //if (err != CAM_ERR_SUCCESS){printError(err);}
 
     int i, iMCUCount, rc, iDataSize, iSize;
@@ -369,25 +407,23 @@ void CamCB(CamImage img)
     uint8_t* img_buffer = img.getImgBuff();
 
     // tensorflow inference code
-/*
+    // Expecting CAM_IMAGE_PIX_FMT_RGB565
     // Send the camera buffer to the input stream
-    for (int i = 0; i < iWidth * iHeight * 2; ++i) {
+    // From spresense_tf_mnist
+    //Serial.println((String)"Put image in memory: " + vWidth + "x"+ vHeight );
+    for (int i = 0; i < vWidth * vHeight * 2; ++i) {
       input->data.f[i] = (float)(img_buffer[i]);
     }
-*/
-/*
-    //    Serial.println("Do inference");
-    TfLiteStatus invoke_status = interpreter->Invoke();
-    if (invoke_status != kTfLiteOk) {
-      Serial.println("Invoke failed");
-      return;
-    }
-    int maxIndex = 0; // Variable to store the index of the highest value
-    float maxValue = output->data.f[0]; // Assume the first value is the highest
- */
 
-/*
-    for (int n = 0; n < 4; ++n) {
+
+    //Serial.println((String)"Do inference");
+    TfLiteStatus invoke_status = interpreter->Invoke();
+    if (invoke_status != kTfLiteOk) {Serial.println("Invoke failed");return;}
+
+   //Serial.println((String)"Gather Results");
+    uint8_t maxIndex = 0;               // Variable to store the index of the highest value
+    float maxValue = output->data.f[0]; // The max is our guy
+    for (int n = 0; n < nClasses; ++n) {
       float value = output->data.f[n];
 
       if (value > maxValue) {
@@ -395,12 +431,44 @@ void CamCB(CamImage img)
         maxIndex = n;
       }
     }
-*/
-//    Serial.println("output:" + String(maxIndex));
+    digitalWrite(heartBeatLED_pin, false);
+
+    // ********  Echo results  ************//
+    Serial.print((String)"None, Bird, Squirrel: [" + 
+                          output->data.f[0] + ", " + 
+                          output->data.f[1] + ", " +
+                          output->data.f[2] + "]" ); 
+
+         if(maxIndex == 2){Serial.println((String)", Detected: Squirrel: " + maxValue);}
+    else if(maxIndex == 1){Serial.println((String)", Detected: Bird: "     + maxValue);}
+    else                  {Serial.println((String)", Detected: Nobody: "   + maxValue);}
+
+    // ********  Set LED Status  ************//
+    setResultsLED(maxIndex);
+
+    // ********  Stream Bitmap Image  ************//
+    int imageSize = img.getImgSize();
+    //Serial.println((String)"SIZE:" + imageSize);
+    //Serial.println((String)"START");
+    Serial.print("X");
+    Serial.write(img.getImgBuff(), imageSize);
 
 
-    
-     // ********  Save A Log  ************//
+    // ********  Take Pix  ************//
+    int imageNumber = 0;
+    // Only take the picture if we have something.
+    if(maxIndex != 0) 
+    {
+      imageNumber = getStill();
+    }
+
+    // ********  Save A Log  ************//
+    // Log Contents: Save Number, confidence array
+    File logFile = theSD.open(logFileName, FILE_WRITE);
+    char logText[80] = {0};
+    sprintf(logText, "%i, %f, %f, %f\n", imageNumber, output->data.f[0], output->data.f[1], output->data.f[2]);   
+    logFile.write(logText);
+    logFile.close();
 
 
   }
