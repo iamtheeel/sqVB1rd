@@ -37,7 +37,8 @@
 // set a save file
 //#define STREAMRGB
 //#define SHOWFULLRGB
-#define SAVEJPG
+//#define SAVEJPG
+#define DOINFER
 
 // Main Board Pins
 const uint8_t safeMode_pin = 1; //D1 (UART2_TX) Safe Boot
@@ -95,9 +96,9 @@ char logFileName[16];
 
 /***      The Model      ***/
 //#include "model.h"
-#include "leNetV5_mod.h"
-//#include "leNetV5.h"
-const int nClasses = 3; // Nothing, Bird, Squirrel
+//#include "leNetV5_mod.h"
+#include "leNetV5.h"
+const int nClasses = 3; // Bird, Nothing, Squirrel
 
 // Image Size for ML
 const int mlWidth = 96, mlHeight = 96; //
@@ -416,19 +417,24 @@ void CamCB(CamImage img)
 
     
     // Resize (and shape?) The image. Lets see if we can trim it.
-    Serial.println((String)"Resize the image");
+    //Serial.println((String)"Resize the image");
     CamImage reSizedImg; // New, smaller image
 
-    int lefttop_x = 0;                           /**< [en] Left top X coodinate in original image for clipping. <BR> [ja] 元画像に対して、クリップする左上のX座標 */
-    int lefttop_y = 0;                           /**< [en] Left top Y coodinate in original image for clipping. <BR> [ja] 元画像に対して、クリップする左上のY座標 */
-    int rightbottom_x = mlWidth - lefttop_x -1;  /**< [en] Right bottom X coodinate in original image for clipping. <BR> [ja] 元画像に対して、クリップする左上のX座標 */
-    int rightbottom_y = mlHeight - lefttop_y -1; /**< [en] Right bottom Y coodinate in original image for clipping. <BR> [ja] 元画像に対して、クリップする左上のY座標 */
+    // 320x240, 96x96
+    // (320 - 96)/2 = 112
+    // (240 - 96)/2 = 72
+    int lefttop_x = (vWidth - mlWidth)/2;   // Center   /**< [en] Left top X coodinate in original image for clipping. <BR> [ja] 元画像に対して、クリップする左上のX座標 */
+    int lefttop_y = (vHeight - mlHeight)/2; // Center   /**< [en] Left top Y coodinate in original image for clipping. <BR> [ja] 元画像に対して、クリップする左上のY座標 */
+    int rightbottom_x = mlWidth + lefttop_x -1;         /**< [en] Right bottom X coodinate in original image for clipping. <BR> [ja] 元画像に対して、クリップする左上のX座標 */
+    int rightbottom_y = mlHeight + lefttop_y -1;        /**< [en] Right bottom Y coodinate in original image for clipping. <BR> [ja] 元画像に対して、クリップする左上のY座標 */
+    Serial.println((String)"Crop Start (x, y): " + lefttop_x + ", " + lefttop_y);
+    Serial.println((String)"Crop End (x, y): " + rightbottom_x + ", " + rightbottom_y);
     err = img.clipAndResizeImageByHW(reSizedImg, lefttop_x, lefttop_y, rightbottom_x, rightbottom_y, mlWidth, mlHeight); // Resize must be in CAM_IMAGE_PIX_FMT_YUV422
-    if (err != CAM_ERR_SUCCESS){printError(err);} 
+    if (err != CAM_ERR_SUCCESS){printError(err);} // Image size must end up one of our good ones.
 
     //Serial.println((String)"Can we convert to to: CAM_IMAGE_PIX_FMT_JPG"); //No
 
-    Serial.println((String)"Convert the reSizedImg to: CAM_IMAGE_PIX_FMT_RGB565");
+    //Serial.println((String)"Convert the reSizedImg to: CAM_IMAGE_PIX_FMT_RGB565");
 #ifdef SHOWFULLRGB
     err =  img.convertPixFormat(CAM_IMAGE_PIX_FMT_RGB565);
     if (err != CAM_ERR_SUCCESS){printError(err);}
@@ -451,10 +457,14 @@ void CamCB(CamImage img)
       input->data.f[i] = (float)(img_buffer[i]);
     }
 
-
-    //Serial.println((String)"Do inference");
-    //TfLiteStatus invoke_status = interpreter->Invoke();
-    //if (invoke_status != kTfLiteOk) {Serial.println("Invoke failed");return;}
+#ifdef DOINFER
+    Serial.println((String)"Do inference");
+    unsigned long infStart_ms = millis();
+    TfLiteStatus invoke_status = interpreter->Invoke();
+    if (invoke_status != kTfLiteOk) {Serial.println("Invoke failed");return;}
+    unsigned long inferenceTime_ms = millis() - infStart_ms;
+    Serial.println((String)"Inference time (ms): " + inferenceTime_ms);
+#endif
 
    //Serial.println((String)"Gather Results");
     uint8_t maxIndex = 0;               // Variable to store the index of the highest value
@@ -470,13 +480,13 @@ void CamCB(CamImage img)
 
     digitalWrite(heartBeatLED_pin, false); // the on time is the save/strem time.. and the 5Hz
     // ********  Echo results  ************//
-    Serial.print((String)"None, Bird, Squirrel: [" + 
+    Serial.print((String)"Bird, None, Squirrel: [" + 
                           output->data.f[0] + ", " + 
                           output->data.f[1] + ", " +
                           output->data.f[2] + "]" ); 
 
          if(maxIndex == 2){Serial.println((String)", Detected: Squirrel: " + maxValue);}
-    else if(maxIndex == 1){Serial.println((String)", Detected: Bird: "     + maxValue);}
+    else if(maxIndex == 0){Serial.println((String)", Detected: Bird: "     + maxValue);}
     else                  {Serial.println((String)", Detected: Nobody: "   + maxValue);}
 
     // ********  Set LED Status  ************//
@@ -505,7 +515,10 @@ void CamCB(CamImage img)
     if(maxIndex != 0) // We will also add a max threshold
     {
 #ifdef SAVEJPG
+      unsigned long fileSave_ms = millis();
       imageNumber = getStill();
+      unsigned long fileSaveTime_ms = millis() - infStart_ms;
+      Serial.println((String)"FileSave time (ms): " + fileSaveTime_ms);
 #endif
     }
 

@@ -26,20 +26,6 @@ class optimiser:
         Pruning deep CNN Layers
         """
         print(f"Prune it too deep: {self.deepPruneRatio}" )
-        # i = 0
-        # list = self.model.named_children()
-        # print(list)
-        # for item in self.model.named_children():
-        #     print(f"item: {item})
-        # for name, module in self.model.named_modules():
-        #     i = i + 1
-        #     if isinstance(module, torch.nn.Conv2d):
-        #         print(f"Convilutional Layer: {name}, layer:{i}, inCh: {module.in_channels}, outCh: {module.out_channels}")
-        #         self.pruner.set_pruning_ratio(self.deepPruneRatio)
-        #         pruned_layer = module
-        #         self.pruner.set_layer(pruned_layer, main_layer=True)
-        #         remove_filter_idx = self.pruner.get_remove_filter_idx()["current_layer"]
-        #         self.pretrain_model.features[self.deep_layer_idx[index]] = self.pruner.remove_filter_by_index(remove_filter_idx)
 
         for index in range(len(self.deep_layer_idx) - 1):
             print(f"Layer {self.deep_layer_idx[index]}")

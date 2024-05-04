@@ -131,8 +131,11 @@ class leNetV5(nn.Module):
         linConnections = 32
         self.linear = nn.Sequential( nn.Flatten(),
                                       #nn.Linear(605*conv_2Lay, linConnections), # conv_1Lay = 6, conv_2Lay = 16
-                                      nn.Linear(31920, linConnections), # conv_1Lay = 6, conv_2Lay = 16
-                                      nn.ReLU())  
+                                      nn.Linear(605*conv_2Lay, linConnections), # conv_1Lay = 6, conv_2Lay = 16
+                                      nn.ReLU(),
+                                      nn.Linear(linConnections, linConnections), # conv_1Lay = 6, conv_2Lay = 16
+                                      nn.ReLU()
+                                      )  
 
         self.clasifyer = nn.Sequential(nn.Linear(linConnections, output_shape)  )
 

@@ -33,7 +33,7 @@ def opCountLayRes(layerNum, item):
 def saveInfo(model, thingOne, fileName):
     modelName = model.__class__.__name__
     print(f"Saveing : {modelName}{fileName}")
-    fileName = open('../models/'+modelName+fileName, 'w')
+    fileName = open('../output/'+modelName+fileName, 'w')
     stdOut = sys.stdout
     sys.stdout = fileName
     print(modelName)

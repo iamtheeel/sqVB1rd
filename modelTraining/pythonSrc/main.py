@@ -1,3 +1,4 @@
+print(f"INIT: SQB, V0.1Alpha ")
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -11,13 +12,8 @@ from ConfigParser import ConfigParser
 from Trainer import Trainer
 from Logger import Logger
 from Plot import Plot
-if os.path.exists("mylog.log"):
-    log_file_size = os.path.getsize("mylog.log")
-    if log_file_size > 2 * 1024 * 1024:
-        os.remove("mylog.log")
-        print("The log file was greater than 2MB and has been deleted.")
 
-## Josh needs this
+print(f"INIT: Check Log")
 from OpCounter import countOperations, saveInfo, timeStrFromS
 from torchinfo import summary
 import csv
@@ -30,6 +26,7 @@ from optimize import optimiser
 
 from saveModel import saveModel
 
+print(f"INIT: Load Config")
 logging.basicConfig(
     level=logging.DEBUG,
     format='%(asctime)s - %(levelname)s - %(message)s',
@@ -37,6 +34,14 @@ logging.basicConfig(
     filemode='a'
 )
 
+print(f"INIT: Check Log")
+if os.path.exists("mylog.log"):
+    log_file_size = os.path.getsize("mylog.log")
+    if log_file_size > 2 * 1024 * 1024:
+        os.remove("mylog.log")
+        print("The log file was greater than 2MB and has been deleted.")
+
+print(f"INIT: Set Loger")
 stdout_logger = logging.getLogger('STDOUT')
 sys.stdout = Logger(stdout_logger, logging.DEBUG)
 config = ConfigParser(os.path.join(os.getcwd(), 'config.yaml'))
@@ -46,12 +51,13 @@ model_config = config.get_config()["model"]
 """
 Data Preparation
 """
+print(f"INIT: Get Images")
 data_preparation = DataPreparation(meta_config["data_save_path"])
-train_data, test_data = data_preparation.get_data()
+train_data, test_data = data_preparation.get_data(displayImages=True)
 image_width = data_preparation.width
 image_height = data_preparation.height
-image_depth = 3
-exit()
+image_depth = data_preparation.depth
+#exit()
 """
 Hyperparameters preparation
 """
@@ -60,7 +66,7 @@ training_config = config.get_config()["training"]
 #model_config = config.get_config()["model"]
 
 csvColNames = ['model', 'epochs', 'lr', 'hiddenNer', 'batchSize', 'MACs', 'modelPerams', 'trainTimeStr','trainTimeS', 'trainLoss', 'testLoss', 'testAcc']  #trainLoss, testLoss, 
-with open('../models/runSumary.csv', 'w', newline='') as csvfile: # make a new file
+with open('../output/runSumary.csv', 'w', newline='') as csvfile: # make a new file
     csvWriter = csv.DictWriter(csvfile, fieldnames=csvColNames)
     csvWriter.writeheader()
 
@@ -134,7 +140,7 @@ for model_name in model_list:           # Set in model call
         testLoss = trainer.test(data_preparation.classes)
         #testLoss, testAcc = trainer.test() # Unit test reqires singletion 
 
-        with open('../models/runSumary.csv', 'a', newline='') as csvfile: 
+        with open('../output/runSumary.csv', 'a', newline='') as csvfile: 
             csvWriter = csv.DictWriter(csvfile, fieldnames=csvColNames)
             csvWriter.writerow({'model': model_name, 
                                 'epochs':epochs, 'lr':lr, 'hiddenNer':hiddenNerons, 'batchSize':batchSize, 'MACs':MACs, 'modelPerams':mPerams, 
@@ -147,10 +153,11 @@ runTime = timer() - runStartTime
 runTimeStr = timeStrFromS(runTime)
 print(f"Total run time: {runTime} seconds, {runTimeStr}")
 
-saveModel(model=model, name=model_name, imgLayers=image_depth, imgWidth=image_width, imgHeight=image_height)
+saveModel(model=model, imgLayers=image_depth, imgWidth=image_width, imgHeight=image_height)
 #exit()
 """
 Plotting
 
 """
-Plot().plot_prediction(training_config['model'],test_data,os.path.join(os.getcwd(), "outImg/predictions.png") )
+# Figure out how to plot RGB565
+#Plot().plot_prediction(training_config['model'],test_data,os.path.join(os.getcwd(), "../output/predictions.png") )

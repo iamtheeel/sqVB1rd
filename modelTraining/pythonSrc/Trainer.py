@@ -4,6 +4,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
+import numpy as np
 
 from timeit import default_timer as timer
 from OpCounter import timeStrFromS
@@ -20,6 +21,11 @@ class Trainer:
         self.criterion = criterion
         self.model.to(self.device)
         self.set_training_config()
+
+        # from MIC
+        # Save representive data for later on quantization
+        np.save("representive_data",next(iter(self.training_loader))[0].numpy())
+
 
     def set_training_config(self):
         if self.optimizer == "SGD":
@@ -91,7 +97,7 @@ class Trainer:
 
         plt.plot(range((epoch+1)*(batch+1)), lossArr)    
         plt.title("Training loss v Batch")
-        plt.savefig("outImg/trainingLoss.png")
+        plt.savefig("../output/trainingLoss.png")
         #plt.show()
         return thisTrainLoss # Return the final training loss
     
@@ -127,7 +133,7 @@ class Trainer:
         #fig, ax = 
         plot_confusion_matrix(conf_mat=confMat_values.numpy(), class_names=classes)
         plt.title("Confusion Matrix")
-        plt.savefig("outImg/confMatrix.png")
+        plt.savefig("../output/confMatrix.png")
         #plt.show()
 
         return finalTestLoss, test_acc

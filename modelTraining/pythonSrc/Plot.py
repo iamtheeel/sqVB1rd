@@ -18,13 +18,14 @@ class Plot:
                 labels = labels.to(self.device)
                 model.to(self.device)
                 predictions = model(images).squeeze()
-                predicted_labels = torch.argmax(predictions, axis=1)
+                predicted_labels = torch.argmax(predictions, axis=1) # get the index of the largest predic
                 
                 # Setting up the plot
-                plt.figure(figsize=(10, 10))
+                plt.figure(figsize=(20, 20))
                 
                 # Plotting a subset of images, their true labels, and model's predictions
                 for i in range(25):  # Plot 25 images
+                    #print(f"{predictions[i,:]}")
                     plt.subplot(5, 5, i+1)
                     plt.xticks([])
                     plt.yticks([])
@@ -33,8 +34,9 @@ class Plot:
                     true_label = labels[i].item()
                     predicted_label = predicted_labels[i].item()
                     color = 'green' if true_label == predicted_label else 'red'
-                    plt.xlabel("{} ({})".format(model_labels[predicted_label],
-                                                model_labels[true_label]),
+                    plt.xlabel("{} ({}): \n{}".format(model_labels[predicted_label],
+                                                model_labels[true_label],
+                                                predictions[i,:]),
                             color=color)
                 plt.tight_layout()
                 plt.savefig(figname)

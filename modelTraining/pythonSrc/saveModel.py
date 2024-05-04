@@ -23,25 +23,60 @@ import torch
 import onnx_tf
 import onnx
 
+# For representative_dataset
+import torchvision.transforms as trans
+from torchvision import datasets
+
 
 ## add numbers
+# From MIC
 def representative_dataset():
     """
     Prepare representive data for quantization activation layer
     """
-    imgW = 160
-    imgH = 120
-    #data = np.load("representive_data.npy",allow_pickle=True)#("representive_data.npy",allow_pickle=True)#("Representive_data.npy") ??????????????????
-    for i in range(2):
-        #temp_data = data[i]
-        temp_data = np.random.rand(1, 3*imgW*imgH)
-        temp_data = temp_data.reshape(1,3,imgW,imgH)#temp_data = temp_data.reshape(1,globalSize,globalSize,3)
+
+    ### Make a function
+    imgW = 96
+    imgH = 96
+    camWidth = 320 #QQVGA
+    camHeight = 240
+
+    data_path = Path("../data")
+    data_dir =data_path / "train"
+    saveTrans = trans.Compose([
+                trans.Resize((camWidth, camHeight)),
+                trans.CenterCrop(imgW),
+                trans.ToTensor()
+        ])
+    saveDataSet = datasets.ImageFolder(root=data_dir, transform=saveTrans)
+
+    #input_fp32_list = []
+    #startImg = 0
+    #dataLen = len(saveDataSet)
+    #for i in range(startImg, dataLen):
+    #    input_fp32 = saveDataSet.__getitem__(i)[0]
+    #    yield [input_fp32]
+    #    #input_fp32_list.append(input_fp32)
+
+    data = np.load("representive_data.npy",allow_pickle=True)
+    print(f"Data size: {len(data)}") # Batch size?
+    for i in range(5):
+        temp_data = data[i]
+        #temp_data = np.random.rand(1, 3*imgW*imgH)
+        #temp_data = temp_data.reshape(1,2,96,96)# From MIC
+        temp_data = temp_data.reshape(1,2,imgW,imgH)# 2 is from RGB565, 2 bytes for 3 colors
         yield [temp_data.astype(np.float32)]
 
-def saveModel(model, name, imgLayers, imgWidth, imgHeight):
-    modelDir = "../models"
+def saveModel(model, imgLayers, imgWidth, imgHeight):
+    modelDir = "../output"
     modelPath = Path(modelDir)
     modelPath.mkdir(parents=True, exist_ok=True)
+
+    name = model.__class__.__name__
+
+
+    # quantization
+    print(f"First quanisize the model")
 
     # Save the PyTorch Model
     fileName = name+".pth"
@@ -85,4 +120,4 @@ def saveModel(model, name, imgLayers, imgWidth, imgHeight):
 
     ## The final step os 
     #  TF Lite     --> C header
-    # xxd -i converted_model.tflite > model_data.h
+    # xxd -i leNetV5.tflite > leNetV5.h
