@@ -11,7 +11,7 @@
  * "THE BEER-WARE LICENSE" (Revision 42, phk@FreeBSD.ORG):
  * <iamtheeel> wrote this file.  As long as you retain this notice you
  * can do whatever you want with this stuff. If we meet some day, and you think
- * this stuff is worth it, you can buy me a beer in return.   MRM
+ * this stuff is worth it, you can buy me a beer in return.   Joshua Mehlman
  * ----------------------------------------------------------------------------
  */
 // Standard Librarys
@@ -32,6 +32,12 @@
 
 // Self
 //#include "sqbCamera.h"
+
+// Set a debug
+// set a save file
+//#define STREAMRGB
+//#define SHOWFULLRGB
+#define SAVEJPG
 
 // Main Board Pins
 const uint8_t safeMode_pin = 1; //D1 (UART2_TX) Safe Boot
@@ -63,14 +69,21 @@ byte taskClockCycles25Hz = 0, taskClockCycles10Hz = 0, taskClockCycles5Hz, taskC
 
 /***    Camera    ***/
 #define JPGQUAL (90)
-
+// Still
 //const int iWidth = 96, iHeight = 96; // 
 //const int iWidth = CAM_IMGSIZE_QQVGA_H, iHeight = CAM_IMGSIZE_QQVGA_V; // Works
-//const int iWidth = CAM_IMGSIZE_QVGA_H, iHeight = CAM_IMGSIZE_QVGA_V; //
-const int iWidth = CAM_IMGSIZE_VGA_H, iHeight = CAM_IMGSIZE_VGA_V; // 
+const int iWidth = CAM_IMGSIZE_QVGA_H, iHeight = CAM_IMGSIZE_QVGA_V; //
+//const int iWidth = CAM_IMGSIZE_VGA_H, iHeight = CAM_IMGSIZE_VGA_V; // 
+//const int iWidth = CAM_IMGSIZE_HD_H, iHeight = CAM_IMGSIZE_HD_V; // 
+
 //const int iWidth = CAM_IMGSIZE_QUADVGA_H, iHeight = CAM_IMGSIZE_QUADVGA_V; // Max with jpeg, Errored when I have the model going
 //const int iWidth = CAM_IMGSIZE_FULLHD_H, iHeight = CAM_IMGSIZE_FULLHD_V; // Memory Error, even with 1.5M
 
+// Video
+//const int vWidth = 96, vHeight = 96; // The smallest we can do
+//const int vWidth = CAM_IMGSIZE_QQVGA_H, vHeight = CAM_IMGSIZE_QQVGA_V; // 
+const int vWidth = CAM_IMGSIZE_QVGA_H, vHeight = CAM_IMGSIZE_QVGA_V; // The biggest we can do 
+//const int vWidth = CAM_IMGSIZE_VGA_H, vHeight = CAM_IMGSIZE_VGA_V; // No joy(even with minimal memory)
 
 /***      File System     ***/
 SDClass  theSD;
@@ -82,15 +95,12 @@ char logFileName[16];
 
 /***      The Model      ***/
 //#include "model.h"
-#include "leNetV5.h"
+#include "leNetV5_mod.h"
+//#include "leNetV5.h"
 const int nClasses = 3; // Nothing, Bird, Squirrel
 
 // Image Size for ML
-//const int vWidth = 48, vHeight = 48; // Does not like 48x48
-const int vWidth = 96, vHeight = 96; // 
-//const int vWidth = CAM_IMGSIZE_QQVGA_H, vHeight = CAM_IMGSIZE_QQVGA_V; // 
-//const int vWidth = CAM_IMGSIZE_QVGA_H, vHeight = CAM_IMGSIZE_QVGA_V; // 
-//const int vWidth = CAM_IMGSIZE_VGA_H, vHeight = CAM_IMGSIZE_VGA_H; // 
+const int mlWidth = 96, mlHeight = 96; //
 
 tflite::ErrorReporter* error_reporter = nullptr;
 const tflite::Model* model = nullptr;
@@ -99,8 +109,9 @@ TfLiteTensor* input = nullptr;
 TfLiteTensor* output = nullptr;
 int inference_count = 0;
 
+// arena size used (you need to load to find out) + imgW*imgH*2 ...(was 3, but that is wrong, yes?)
 //constexpr int kTensorArenaSize = 350000;
-constexpr int kTensorArenaSize = 90000; // arena at boot + imgW*imgH*3
+constexpr int kTensorArenaSize = 165840; // My LeNet from HW4 (400kb)
 
 uint8_t tensor_arena[kTensorArenaSize];
 
@@ -222,7 +233,8 @@ void setup() {
     Serial.println((String)"Set video format: w = " + vWidth + ", h = " + vHeight); // add the FPS
     // Video streem to the ML: 5 FPS is as slow as we can go
     // RGB 565 is 2 bytes/pixl (R:HB7-HB3, G:HB2-LB5, B: LB4-LB0)
-    err = theCamera.begin(1, CAM_VIDEO_FPS_5, vWidth, vHeight, CAM_IMAGE_PIX_FMT_RGB565); // Settings we want for the ML Network
+    err = theCamera.begin(1, CAM_VIDEO_FPS_5, vWidth, vHeight, CAM_IMAGE_PIX_FMT_YUV422); // Must be YUV422 for clip and resize to work
+    //err = theCamera.begin(1, CAM_VIDEO_FPS_5, vWidth, vHeight, CAM_IMAGE_PIX_FMT_RGB565); // Settings we want for the ML Network
     if (err != CAM_ERR_SUCCESS){printError(err);}
     
     // Which camera we got?
@@ -236,7 +248,8 @@ void setup() {
     if (err != CAM_ERR_SUCCESS){printError(err);}
 
     //ISO
-
+    //setAutoISOSensitivity(true)
+    //setAutoExposure(true)
 
     // Still picture for save and to send to serial
     Serial.println((String)"Set still picture format: w =" + iWidth + ", h = " + iHeight);
@@ -247,7 +260,6 @@ void setup() {
     err = theCamera.setJPEGQuality(JPGQUAL); // 95 Too much, 90 ok, : At QuadVGA
     if (err != CAM_ERR_SUCCESS){printError(err);}
  
-
     // Start the video and register the callback
     // Do this LAST!
     Serial.println("Start streaming"); 
@@ -275,7 +287,7 @@ void loop() {
 
   }
 
-if(miliSec - miliSecTaskClock >=10) // 100Hz loop
+  if(miliSec - miliSecTaskClock >=10) // 100Hz loop
   {
     miliSecTaskClock = millis();
     // *** 100Hz tasks go here
@@ -299,7 +311,7 @@ if(miliSec - miliSecTaskClock >=10) // 100Hz loop
       taskClockCycles5Hz = 0;
 
       if(!safeBoot) {
-        //heartBeat(heartBeatLED_pin);
+        //heartBeat(heartBeatLED_pin); // Heart Beat when we are thinking
       }
       //else {; }
     }
@@ -319,18 +331,18 @@ if(miliSec - miliSecTaskClock >=10) // 100Hz loop
     taskClockCycles5Hz++;
     taskClockCycles10Hz++;
     taskClockCycles25Hz++;
-  }
-}
+  } // safe boot
+}  // loop
 
 void heartBeat(int hbPin)
 {
-  static bool pinState;
+  static bool pinState = 0;
 
   digitalWrite(hbPin, pinState);
   pinState = !pinState;
 }
 
-void setResultsLED(uint8_t detect)
+void setResultsLED(int8_t detect)
 {
   // Set everybody off
   digitalWrite(  nobodyLED_pin, false);
@@ -338,8 +350,10 @@ void setResultsLED(uint8_t detect)
   digitalWrite(squirrelLED_pin, false);
 
   // Set our detect on
-  // The pins are all in a row starting with "None"
-  digitalWrite(nobodyLED_pin + detect, true);
+  // The pins are all in a row starting with "None"i
+  if(detect > 0) {
+    digitalWrite(nobodyLED_pin + detect, true);
+  }
 }
 
 int getStill()
@@ -395,30 +409,52 @@ void CamCB(CamImage img)
   CamErr err;
 
   /* Check the img instance is available or not. */
-  if (img.isAvailable())
+  if (img.isAvailable()) // Turn the results off when thinking about it
   {
     digitalWrite(heartBeatLED_pin, true); // Heart Beat when we are thinking
-    //CamImage reSizedImg; // New, smaller image
-    //err = img.resizeImageByHW(reSizedImg, 48, 48); //Damned invalide peram, 96x96 seems to be the smallest
-    //if (err != CAM_ERR_SUCCESS){printError(err);}
+    setResultsLED(-1);
 
-    int i, iMCUCount, rc, iDataSize, iSize;
-    uint8_t *pBuffer;
+    
+    // Resize (and shape?) The image. Lets see if we can trim it.
+    Serial.println((String)"Resize the image");
+    CamImage reSizedImg; // New, smaller image
+
+    int lefttop_x = 0;                           /**< [en] Left top X coodinate in original image for clipping. <BR> [ja] 元画像に対して、クリップする左上のX座標 */
+    int lefttop_y = 0;                           /**< [en] Left top Y coodinate in original image for clipping. <BR> [ja] 元画像に対して、クリップする左上のY座標 */
+    int rightbottom_x = mlWidth - lefttop_x -1;  /**< [en] Right bottom X coodinate in original image for clipping. <BR> [ja] 元画像に対して、クリップする左上のX座標 */
+    int rightbottom_y = mlHeight - lefttop_y -1; /**< [en] Right bottom Y coodinate in original image for clipping. <BR> [ja] 元画像に対して、クリップする左上のY座標 */
+    err = img.clipAndResizeImageByHW(reSizedImg, lefttop_x, lefttop_y, rightbottom_x, rightbottom_y, mlWidth, mlHeight); // Resize must be in CAM_IMAGE_PIX_FMT_YUV422
+    if (err != CAM_ERR_SUCCESS){printError(err);} 
+
+    //Serial.println((String)"Can we convert to to: CAM_IMAGE_PIX_FMT_JPG"); //No
+
+    Serial.println((String)"Convert the reSizedImg to: CAM_IMAGE_PIX_FMT_RGB565");
+#ifdef SHOWFULLRGB
+    err =  img.convertPixFormat(CAM_IMAGE_PIX_FMT_RGB565);
+    if (err != CAM_ERR_SUCCESS){printError(err);}
     uint8_t* img_buffer = img.getImgBuff();
+    int imageSize = img.getImgSize();
+#else
+    err =  reSizedImg.convertPixFormat(CAM_IMAGE_PIX_FMT_RGB565);
+    if (err != CAM_ERR_SUCCESS){printError(err);}
+    uint8_t* img_buffer = reSizedImg.getImgBuff();
+    int imageSize = reSizedImg.getImgSize();
+#endif
+    
 
     // tensorflow inference code
     // Expecting CAM_IMAGE_PIX_FMT_RGB565
     // Send the camera buffer to the input stream
     // From spresense_tf_mnist
-    //Serial.println((String)"Put image in memory: " + vWidth + "x"+ vHeight );
-    for (int i = 0; i < vWidth * vHeight * 2; ++i) {
+    //Serial.println((String)"Put image in memory: " + mlWidth + "x"+ mlHeight );
+    for (int i = 0; i < mlWidth * mlHeight * 2; ++i) {
       input->data.f[i] = (float)(img_buffer[i]);
     }
 
 
     //Serial.println((String)"Do inference");
-    TfLiteStatus invoke_status = interpreter->Invoke();
-    if (invoke_status != kTfLiteOk) {Serial.println("Invoke failed");return;}
+    //TfLiteStatus invoke_status = interpreter->Invoke();
+    //if (invoke_status != kTfLiteOk) {Serial.println("Invoke failed");return;}
 
    //Serial.println((String)"Gather Results");
     uint8_t maxIndex = 0;               // Variable to store the index of the highest value
@@ -431,8 +467,8 @@ void CamCB(CamImage img)
         maxIndex = n;
       }
     }
-    digitalWrite(heartBeatLED_pin, false);
 
+    digitalWrite(heartBeatLED_pin, false); // the on time is the save/strem time.. and the 5Hz
     // ********  Echo results  ************//
     Serial.print((String)"None, Bird, Squirrel: [" + 
                           output->data.f[0] + ", " + 
@@ -446,22 +482,34 @@ void CamCB(CamImage img)
     // ********  Set LED Status  ************//
     setResultsLED(maxIndex);
 
+#ifdef STREAMRGB
     // ********  Stream Bitmap Image  ************//
-    int imageSize = img.getImgSize();
+
+
     //Serial.println((String)"SIZE:" + imageSize);
     //Serial.println((String)"START");
-    Serial.print("X");
-    Serial.write(img.getImgBuff(), imageSize);
+    
+    Serial.print("A");
+    Serial.print("3");
+    Serial.print("3");
 
+    Serial.write(img_buffer, imageSize);
+    //Serial.write(reSizedImg.getImgBuff(), imageSize);
+#endif
 
     // ********  Take Pix  ************//
-    int imageNumber = 0;
+    //Serial.println((String)"Take a still");
+    int imageNumber = -1;
     // Only take the picture if we have something.
-    if(maxIndex != 0) 
+
+    if(maxIndex != 0) // We will also add a max threshold
     {
+#ifdef SAVEJPG
       imageNumber = getStill();
+#endif
     }
 
+// We will move the inside the if maxIndex
     // ********  Save A Log  ************//
     // Log Contents: Save Number, confidence array
     File logFile = theSD.open(logFileName, FILE_WRITE);

@@ -1,0 +1,16 @@
+training:
+  #model: "TinyVGG"
+  model: "FashionMNISTModelV2"
+  criterion: "CrossEntropyLoss"
+  optimizer: "SGD"
+  #optimizer: "Adam"
+  epochs: 1
+  learning_rate: 0.1
+  batch_size: 64
+
+model:
+  FashionMNISTModelV2:
+    hidden_neurons: 30 
+
+meta:
+  data_save_path: "../data/"
