@@ -48,8 +48,8 @@ def representative_dataset():
                 trans.CenterCrop(imgW),
                 trans.ToTensor()
         ])
-    saveDataSet = datasets.ImageFolder(root=data_dir, transform=saveTrans)
 
+    #saveDataSet = datasets.ImageFolder(root=data_dir, transform=saveTrans)
     #input_fp32_list = []
     #startImg = 0
     #dataLen = len(saveDataSet)
@@ -58,12 +58,10 @@ def representative_dataset():
     #    yield [input_fp32]
     #    #input_fp32_list.append(input_fp32)
 
-    data = np.load("representive_data.npy",allow_pickle=True)
-    print(f"Data size: {len(data)}") # Batch size?
-    for i in range(5):
+    data = np.load("representive_data.npy",allow_pickle=True) #Created in DataPreperation
+    print(f"Data size: {data.shape}") # Batch size: 87, 2, 96, 96
+    for i in range(len(data)):
         temp_data = data[i]
-        #temp_data = np.random.rand(1, 3*imgW*imgH)
-        #temp_data = temp_data.reshape(1,2,96,96)# From MIC
         temp_data = temp_data.reshape(1,2,imgW,imgH)# 2 is from RGB565, 2 bytes for 3 colors
         yield [temp_data.astype(np.float32)]
 

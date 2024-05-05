@@ -22,11 +22,6 @@ class Trainer:
         self.model.to(self.device)
         self.set_training_config()
 
-        # from MIC
-        # Save representive data for later on quantization
-        np.save("representive_data",next(iter(self.training_loader))[0].numpy())
-
-
     def set_training_config(self):
         if self.optimizer == "SGD":
             self.optimizer = optim.SGD(self.model.parameters(), lr=self.learning_rate)
@@ -126,11 +121,12 @@ class Trainer:
         
         from torchmetrics import ConfusionMatrix
         from mlxtend.plotting import plot_confusion_matrix
+
         y_pred_tensor = torch.cat(y_preds)
         y_targ_tensor = torch.cat(y_targs)
         confMat = ConfusionMatrix(num_classes=len(classes), task='multiclass')
         confMat_values = confMat(preds=y_pred_tensor, target=y_targ_tensor)
-        #fig, ax = 
+
         plot_confusion_matrix(conf_mat=confMat_values.numpy(), class_names=classes)
         plt.title("Confusion Matrix")
         plt.savefig("../output/confMatrix.png")

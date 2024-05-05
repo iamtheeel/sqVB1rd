@@ -73,13 +73,13 @@ model_list = ["leNetV5"]
 #model_list = ["MobileNetV3"] # Cant Prune
 #model_list = ["AlexNet"]   # way too big
 #model_list = ["leNetV5", "TinyVGG", "logisticRegression", "multilayerPerceptron"]
-nEpochs_list = [1]
+nEpochs_list = [10]
 #nEpochs_list = [1, 10, 20]
 NumHidden_list = [30]
 #NumHidden_list = [15, 30, 60]
 lr_list = [0.01]
 #lr_list = [0.1, 0.01]
-bSize_list = [5]
+bSize_list = [8]
 #bSize_list = [16, 32, 64]
 
 runStartTime = timer()
@@ -153,10 +153,7 @@ runTimeStr = timeStrFromS(runTime)
 print(f"Total run time: {runTime} seconds, {runTimeStr}")
 
 saveModel(model=model, imgLayers=image_depth, imgWidth=image_width, imgHeight=image_height)
-#exit()
-"""
-Plotting
 
-"""
+
 # Figure out how to plot RGB565
 #Plot().plot_prediction(training_config['model'],test_data,os.path.join(os.getcwd(), "../output/predictions.png") )
