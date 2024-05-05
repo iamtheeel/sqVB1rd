@@ -385,7 +385,7 @@ int getStill()
     Serial.println((String) "Save taken picture as " + filename);
     //theSD.remove(filename); // Remove any file with that name in case there is a cockup
     File myFile = theSD.open(filename, FILE_WRITE);
-    Serial.println((String) "writing img");
+    //Serial.println((String) "writing img");
     myFile.write(img.getImgBuff(), img.getImgSize());
     myFile.close();
   }

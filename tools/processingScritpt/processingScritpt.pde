@@ -26,7 +26,8 @@ byte[] frameBuffer = new byte[bytesPerFrame];
 void setup()
 {
   size(94, 94);
-  myPort = new Serial(this, "/dev/cu.usbserial-11310", 921600);     // Mac
+  //myPort = new Serial(this, "/dev/cu.usbserial-11310", 921600);     // Mac
+  myPort = new Serial(this, "/dev/ttyUSB1", 1000000);     // Lunux
 
   // wait for full frame of bytes
   myPort.buffer(bytesPerFrame);  
