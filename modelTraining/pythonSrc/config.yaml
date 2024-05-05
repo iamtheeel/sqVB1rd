@@ -13,4 +13,5 @@ model:
     hidden_neurons: 30 
 
 meta:
-  data_save_path: "../data/"
+  data_save_path: "../../images/240504_1/tagged"
+  #data_save_path: "../data/"

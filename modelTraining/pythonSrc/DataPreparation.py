@@ -25,11 +25,11 @@ class DataPreparation:
         self.height = 96
         self.camWidth = 320 #QQVGA
         self.camHeight = 240
-        self.depth = 2 # BGR2RGB565
+        self.depth = 2 # RGB565 is 2 bits for 3 colors
 
     def get_data(self, displayImages=False):
         Trans = trans.Compose([
-            trans.Resize((self.camWidth, self.camHeight)),
+            trans.Resize((self.camHeight, self.camWidth)), #Resize is H/w
             trans.CenterCrop(self.width),
             #trans.Resize((self.height, self.width)),
             RGB2RGB565(),

@@ -13,7 +13,6 @@ from Trainer import Trainer
 from Logger import Logger
 from Plot import Plot
 
-print(f"INIT: Check Log")
 from OpCounter import countOperations, saveInfo, timeStrFromS
 from torchinfo import summary
 import csv
@@ -53,7 +52,7 @@ Data Preparation
 """
 print(f"INIT: Get Images")
 data_preparation = DataPreparation(meta_config["data_save_path"])
-train_data, test_data = data_preparation.get_data(displayImages=True)
+train_data, test_data = data_preparation.get_data(displayImages=False)
 image_width = data_preparation.width
 image_height = data_preparation.height
 image_depth = data_preparation.depth
@@ -137,8 +136,8 @@ for model_name in model_list:           # Set in model call
         trainLoss = trainer.train()
         trainTime = timer() - startTime
         trainTimeStr = timeStrFromS(trainTime)
-        testLoss = trainer.test(data_preparation.classes)
-        #testLoss, testAcc = trainer.test() # Unit test reqires singletion 
+        #testLoss = trainer.test(data_preparation.classes)
+        testLoss, testAcc = trainer.test(data_preparation.classes) # Unit test reqires singletion 
 
         with open('../output/runSumary.csv', 'a', newline='') as csvfile: 
             csvWriter = csv.DictWriter(csvfile, fieldnames=csvColNames)

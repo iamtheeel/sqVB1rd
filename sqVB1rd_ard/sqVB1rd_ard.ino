@@ -37,7 +37,7 @@
 // set a save file
 //#define STREAMRGB
 //#define SHOWFULLRGB
-#define SAVEJPG
+//#define SAVEJPG
 #define DOINFER
 
 // Main Board Pins
@@ -146,7 +146,7 @@ void setup() {
     while (!theSD.begin()) 
     {
        //wait until SD card is mounted.
-       Serial.println("Insert SD card.");
+       Serial.println("No SD card Found!");
        delay(500);
     }
     Serial.println("SD card Mounted.");

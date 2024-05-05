@@ -14,8 +14,8 @@ import os, fnmatch, shutil
 from pathlib import Path
 from random import random
 
-moveFromCam = False
-testTrainSplit = True
+moveFromCam = True
+testTrainSplit = False
 
 if moveFromCam:
     # Where our existing images are
@@ -29,7 +29,8 @@ if moveFromCam:
     #runDir = "240408_1"
     #runDir = "240408_2"
     #runDir = "240409_1"
-    runDir = "240409_2"
+    #runDir = "240409_2"
+    runDir = "240504_1"
 
     #move data from photo folder to data dir
     baseDir = "../../images"
@@ -56,7 +57,7 @@ for file in listing:
         imageFile_str =inDir+'/'+file.name
 
         if moveFromCam:
-            newFileName_str = outDir+'/'+runDir+'-'+file.name
+            newName_str = outDir+'/'+runDir+'-'+file.name
 
         if testTrainSplit:
             randNum = round(random()*100)
@@ -64,7 +65,7 @@ for file in listing:
                 testTrain = 'test'
             else:
                 testTrain = 'train'
-            newDirName_str = outDir+testTrain +'/' + sqb
+            newName_str = outDir+testTrain +'/' + sqb
 
-        shutil.copy2(imageFile_str, newDirName_str)
-        print(f"Copoy file: {imageFile_str} to: {newDirName_str}")
+        shutil.copy2(imageFile_str, newName_str)
+        print(f"Copoy file: {imageFile_str} to: {newName_str}")

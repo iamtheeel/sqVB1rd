@@ -75,9 +75,6 @@ def saveModel(model, imgLayers, imgWidth, imgHeight):
     name = model.__class__.__name__
 
 
-    # quantization
-    print(f"First quanisize the model")
-
     # Save the PyTorch Model
     fileName = name+".pth"
     modelFile = modelPath/fileName
