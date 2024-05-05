@@ -37,7 +37,7 @@
 // set a save file
 //#define STREAMRGB
 //#define SHOWFULLRGB
-//#define SAVEJPG
+#define SAVEJPG
 #define DOINFER
 
 // Main Board Pins
@@ -65,7 +65,8 @@ byte taskClockCycles25Hz = 0, taskClockCycles10Hz = 0, taskClockCycles5Hz, taskC
 //int everyNthImage = 5; // Slow down, try 1Hz
 
 /***    Serial    ***/
-#define BAUDRATE (921600)
+//#define BAUDRATE (921600)
+#define BAUDRATE (1000000)
 
 
 /***    Camera    ***/
@@ -427,8 +428,8 @@ void CamCB(CamImage img)
     int lefttop_y = (vHeight - mlHeight)/2; // Center   /**< [en] Left top Y coodinate in original image for clipping. <BR> [ja] 元画像に対して、クリップする左上のY座標 */
     int rightbottom_x = mlWidth + lefttop_x -1;         /**< [en] Right bottom X coodinate in original image for clipping. <BR> [ja] 元画像に対して、クリップする左上のX座標 */
     int rightbottom_y = mlHeight + lefttop_y -1;        /**< [en] Right bottom Y coodinate in original image for clipping. <BR> [ja] 元画像に対して、クリップする左上のY座標 */
-    Serial.println((String)"Crop Start (x, y): " + lefttop_x + ", " + lefttop_y);
-    Serial.println((String)"Crop End (x, y): " + rightbottom_x + ", " + rightbottom_y);
+    //Serial.println((String)"Crop Start (x, y): " + lefttop_x + ", " + lefttop_y);
+    //Serial.println((String)"Crop End (x, y): " + rightbottom_x + ", " + rightbottom_y);
     err = img.clipAndResizeImageByHW(reSizedImg, lefttop_x, lefttop_y, rightbottom_x, rightbottom_y, mlWidth, mlHeight); // Resize must be in CAM_IMAGE_PIX_FMT_YUV422
     if (err != CAM_ERR_SUCCESS){printError(err);} // Image size must end up one of our good ones.
 
@@ -512,15 +513,15 @@ void CamCB(CamImage img)
     int imageNumber = -1;
     // Only take the picture if we have something.
 
-    if(maxIndex != 0) // We will also add a max threshold
-    {
+    //if(maxIndex != 1) // We will also add a max threshold
+    //{
 #ifdef SAVEJPG
       unsigned long fileSave_ms = millis();
       imageNumber = getStill();
-      unsigned long fileSaveTime_ms = millis() - infStart_ms;
+      unsigned long fileSaveTime_ms = millis() - fileSave_ms;
       Serial.println((String)"FileSave time (ms): " + fileSaveTime_ms);
 #endif
-    }
+    //}
 
 // We will move the inside the if maxIndex
     // ********  Save A Log  ************//
