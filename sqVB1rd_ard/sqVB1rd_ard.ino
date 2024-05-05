@@ -37,7 +37,7 @@
 // set a save file
 //#define STREAMRGB
 //#define SHOWFULLRGB
-//#define SAVEJPG
+#define SAVEJPG
 #define DOINFER
 
 // Main Board Pins
@@ -377,6 +377,7 @@ int getStill()
     // ********  Save The File  ************//
     // Save 
     char filename[30] = {0};
+    // Create the dir...
     do{ 
       sprintf(filename, "DCIM/%05d.JPG", ++take_picture_count);    //DCIM/
       //Serial.println((String) "Trying: " + filename);
@@ -481,14 +482,22 @@ void CamCB(CamImage img)
 
     digitalWrite(heartBeatLED_pin, false); // the on time is the save/strem time.. and the 5Hz
     // ********  Echo results  ************//
+    static int biCount = 0;
+    static int nbCount = 0;
+    static int sqCount = 0;
+
+    
     Serial.print((String)"Bird, None, Squirrel: [" + 
                           output->data.f[0] + ", " + 
                           output->data.f[1] + ", " +
                           output->data.f[2] + "]" ); 
+    
 
-         if(maxIndex == 2){Serial.println((String)", Detected: Squirrel: " + maxValue);}
-    else if(maxIndex == 0){Serial.println((String)", Detected: Bird: "     + maxValue);}
-    else                  {Serial.println((String)", Detected: Nobody: "   + maxValue);}
+         if(maxIndex == 2){Serial.print((String)", Detected: Squirrel: " + maxValue); sqCount++;}
+    else if(maxIndex == 0){Serial.print((String)", Detected: Bird: "     + maxValue); biCount++;}
+    else                  {Serial.print((String)", Detected: Nobody: "   + maxValue); nbCount++;}
+
+    Serial.println((String)" | Counts: " + biCount + ", " + nbCount + ", " + sqCount);
 
     // ********  Set LED Status  ************//
     setResultsLED(maxIndex);
