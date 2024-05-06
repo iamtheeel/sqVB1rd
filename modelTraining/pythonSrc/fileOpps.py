@@ -30,7 +30,9 @@ if moveFromCam:
     #runDir = "240408_2"
     #runDir = "240409_1"
     #runDir = "240409_2"
-    runDir = "240504_1"
+    #runDir = "240504_1"
+    #runDir = "240505_2"
+    runDir = "240505_3"
 
     #move data from photo folder to data dir
     baseDir = "../../images"
@@ -46,7 +48,7 @@ if testTrainSplit:
     inDir = baseDir+'/all/' + sqb
     outDir = baseDir+'/'
 
-# Where we put the new images
+# Make a new dir for Where we put the new images
 dirPath = Path(outDir)
 dirPath.mkdir(exist_ok=True)
 
