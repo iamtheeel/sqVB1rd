@@ -101,10 +101,10 @@ def saveModel(model, imgLayers, imgWidth, imgHeight):
     converter = tensorflow.lite.TFLiteConverter.from_saved_model(tfFile)
     # Some settings for the tfLite from MIC
     converter.optimizations = [tensorflow.lite.Optimize.DEFAULT]
-    #converter.representative_dataset = representative_dataset
-    #converter.target_spec.supported_ops = [tensorflow.lite.OpsSet.TFLITE_BUILTINS_INT8]
-    #converter.inference_input_type = tensorflow.int8  # or tf.uint8
-    #converter.inference_output_type = tensorflow.float32
+    converter.representative_dataset = representative_dataset
+    converter.target_spec.supported_ops = [tensorflow.lite.OpsSet.TFLITE_BUILTINS_INT8]
+    converter.inference_input_type = tensorflow.int8  # or tf.uint8
+    converter.inference_output_type = tensorflow.float32
 
     tflite_model = converter.convert()
     open(tfLiteFile, 'wb').write(tflite_model)
