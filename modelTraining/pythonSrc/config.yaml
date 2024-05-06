@@ -13,7 +13,7 @@ model:
     hidden_neurons: 30 
 
 meta:
-  #data_save_path: "../../images/240504_1/tagged"
-  data_save_path: "../240505_combined/"
+  data_save_path: "../../images/240504_1/tagged"
+  #data_save_path: "../240505_combined/"
   #data_save_path: "../data_trainSet1/"
   #data_save_path: "../data_shortSet/"
