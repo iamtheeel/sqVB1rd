@@ -358,10 +358,10 @@ void setResultsLED(int8_t detect)
   }
 }
 
-int getStill()
+int saveStill(CamImage img)
 {
-  CamErr err;
-  CamImage img =  theCamera.takePicture();
+  // CamErr err;
+  // CamImage img =  theCamera.takePicture();
 
   /* Check the img instance is available or not. */
   if (img.isAvailable())
@@ -450,6 +450,20 @@ void CamCB(CamImage img)
 #endif
     
 
+    // ********  Take Pix  ************//
+    //Serial.println((String)"Take a still");
+    int imageNumber = -1;
+    
+#ifdef SAVEJPG
+      CamImage img =  theCamera.takePicture();
+
+      // Get still before inferance, but save after
+      unsigned long fileSave_ms = millis();
+      imageNumber = saveStill(img);
+      unsigned long fileSaveTime_ms = millis() - fileSave_ms;
+      Serial.println((String)"FileSave time (ms): " + fileSaveTime_ms);
+#endif
+
 #ifdef DOINFER
     // tensorflow inference code
     // Expecting CAM_IMAGE_PIX_FMT_RGB565
@@ -458,21 +472,9 @@ void CamCB(CamImage img)
     //Serial.println((String)"Put image in memory: " + mlWidth + "x"+ mlHeight );
     for (int i = 0; i < mlWidth * mlHeight * 2; ++i) {
       //input->data.f[i] = (float)(img_buffer[i]);
-      input->data.int8[i] = img_buffer[i]; // currently an int8... but move to uint8
+      input->data.uint8[i] = img_buffer[i]; // model exported with uint8
     }
 
-    // ********  Take Pix  ************//
-    //Serial.println((String)"Take a still");
-    int imageNumber = -1;
-#ifdef SAVEJPG
-      // Get still before inferance, but save after
-      unsigned long fileSave_ms = millis();
-      imageNumber = getStill();
-      unsigned long fileSaveTime_ms = millis() - fileSave_ms;
-      Serial.println((String)"FileSave time (ms): " + fileSaveTime_ms);
-#endif
-
-#ifdef DOINFER
     Serial.println((String)"Do inference");
     unsigned long infStart_ms = millis();
     TfLiteStatus invoke_status = interpreter->Invoke();
