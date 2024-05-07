@@ -360,9 +360,6 @@ void setResultsLED(int8_t detect)
 
 int saveStill(CamImage img)
 {
-  // CamErr err;
-  // CamImage img =  theCamera.takePicture();
-
   /* Check the img instance is available or not. */
   if (img.isAvailable())
   {
@@ -450,18 +447,11 @@ void CamCB(CamImage img)
 #endif
     
 
-    // ********  Take Pix  ************//
-    //Serial.println((String)"Take a still");
+    // ********  Take Pix before inf so we have it ready to save ************//
     int imageNumber = -1;
-    
 #ifdef SAVEJPG
+      //Serial.println((String)"Take a still");
       CamImage img =  theCamera.takePicture();
-
-      // Get still before inferance, but save after
-      unsigned long fileSave_ms = millis();
-      imageNumber = saveStill(img);
-      unsigned long fileSaveTime_ms = millis() - fileSave_ms;
-      Serial.println((String)"FileSave time (ms): " + fileSaveTime_ms);
 #endif
 
 #ifdef DOINFER
@@ -511,6 +501,15 @@ void CamCB(CamImage img)
 
     // ********  Set LED Status  ************//
     setResultsLED(maxIndex);
+
+    // ********  Save the JPG that we captured just before inference  ************//
+#ifdef SAVEJPG
+      // Get still before inferance, but save after
+      unsigned long fileSave_ms = millis();
+      imageNumber = saveStill(img);
+      unsigned long fileSaveTime_ms = millis() - fileSave_ms;
+      Serial.println((String)"FileSave time (ms): " + fileSaveTime_ms);
+#endif
 
 #ifdef STREAMRGB
     // ********  Stream Bitmap Image  ************//
