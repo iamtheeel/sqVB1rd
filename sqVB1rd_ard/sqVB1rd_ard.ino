@@ -178,7 +178,7 @@ void setup() {
     // This pulls in all the operation implementations we need.
      Serial.println((String)"Start resolver: ");
     //static tflite::AllOpsResolver resolver;
-    static tflite::MicroMutableOpResolver<8> resolver; // The number of adds
+    static tflite::MicroMutableOpResolver<9> resolver; // The number of adds
     resolver.AddMaxPool2D();
     resolver.AddConv2D();
     resolver.AddRelu();
@@ -187,6 +187,7 @@ void setup() {
     resolver.AddReshape();
     resolver.AddFullyConnected();
     resolver.AddDequantize();
+    resolver.AddQuantize();
     RegisterDebugLogCallback(debug_log_printf);
 
     
