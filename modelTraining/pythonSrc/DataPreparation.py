@@ -41,7 +41,8 @@ class DataPreparation:
 
         # From https://stackoverflow.com/questions/54897646/pytorch-datasets-converting-entire-dataset-to-numpy
         from torch.utils.data import DataLoader
-        loaderForRepData = DataLoader(train_data, batch_size=len(train_data))
+        loaderForRepData = DataLoader(train_data, batch_size=1)
+        #loaderForRepData = DataLoader(train_data, batch_size=len(train_data))
         np.save("representive_data",next(iter(loaderForRepData))[0].numpy()) # itertes over the batch... not the image
 
 

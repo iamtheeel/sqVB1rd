@@ -213,14 +213,14 @@ void setup() {
     output = interpreter->output(0);
 
     /***             Logging setup              ***/ //Move to seperate file
+    Serial.print((String) "Initilising log");
     int logNum = 0;
     do{ 
       sprintf(logFileName, "%i_log.csv", ++logNum);  // Find the next empty file
     }while(theSD.exists(logFileName));
-
-    Serial.println((String) "Initilising log file: " + logFileName);
+    Serial.println((String) ", file: " + logFileName);
     File myFile = theSD.open(logFileName, FILE_WRITE);
-    myFile.write("FileNum, none, b1rd, squirrl\n");
+    myFile.write("FileNum, Bird, None, squirrel\n");
     myFile.close();
 
 
@@ -450,6 +450,7 @@ void CamCB(CamImage img)
 #endif
     
 
+#ifdef DOINFER
     // tensorflow inference code
     // Expecting CAM_IMAGE_PIX_FMT_RGB565
     // Send the camera buffer to the input stream
@@ -497,18 +498,13 @@ void CamCB(CamImage img)
     static int biCount = 0;
     static int nbCount = 0;
     static int sqCount = 0;
-
-    
     Serial.print((String)"Bird, None, Squirrel: [" + 
                           output->data.f[0] + ", " + 
                           output->data.f[1] + ", " +
                           output->data.f[2] + "]" ); 
-    
-
          if(maxIndex == 2){Serial.print((String)", Detected: Squirrel: " + maxValue); sqCount++;}
     else if(maxIndex == 0){Serial.print((String)", Detected: Bird: "     + maxValue); biCount++;}
     else                  {Serial.print((String)", Detected: Nobody: "   + maxValue); nbCount++;}
-
     Serial.println((String)" | Counts: " + biCount + ", " + nbCount + ", " + sqCount);
 
     // ********  Set LED Status  ************//
@@ -545,8 +541,6 @@ void CamCB(CamImage img)
     sprintf(logText, "%i, %f, %f, %f\n", imageNumber, output->data.f[0], output->data.f[1], output->data.f[2]);   
     logFile.write(logText);
     logFile.close();
-
-
   }
   else
   {

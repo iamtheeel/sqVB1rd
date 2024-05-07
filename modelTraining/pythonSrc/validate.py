@@ -6,7 +6,7 @@ from pathlib import Path
 
 hiddenNerons = 30
 MODEL_NAME = "leNetV5.pth"
-MODEL_PATH = Path("../models/leNetV5_mod/11_dataAugmentation")
+MODEL_PATH = Path("../models/leNetV5_mod/13_BRG565")
 
 
 print(f"INIT: Set Loger")
