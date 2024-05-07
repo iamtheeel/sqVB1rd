@@ -21,9 +21,6 @@ from timeit import default_timer as timer
 ## Optimise
 from optimize import optimiser
 
-## For save
-
-from saveModel import saveModel
 
 print(f"INIT: Load Config")
 logging.basicConfig(
@@ -152,7 +149,21 @@ runTime = timer() - runStartTime
 runTimeStr = timeStrFromS(runTime)
 print(f"Total run time: {runTime} seconds, {runTimeStr}")
 
-saveModel(model=model, imgLayers=image_depth, imgWidth=image_width, imgHeight=image_height)
+# Save the model
+from pathlib import Path
+modelDir = "../output"
+modelPath = Path(modelDir)
+modelPath.mkdir(parents=True, exist_ok=True)
+name = model.__class__.__name__
+
+fileName = name+".pth"
+modelFile = modelPath/fileName
+print(f"Saving PyTorch Model State Dict: {modelFile}")
+torch.save(obj=model.state_dict(), f=modelFile)
+#torch.save({"state_dict":model.state_dict()}, f=modelFile)
+
+#from saveModel import saveModel
+#saveModel(model=model, imgLayers=image_depth, imgWidth=image_width, imgHeight=image_height)
 
 
 # Figure out how to plot RGB565
