@@ -456,8 +456,20 @@ void CamCB(CamImage img)
     // From spresense_tf_mnist
     //Serial.println((String)"Put image in memory: " + mlWidth + "x"+ mlHeight );
     for (int i = 0; i < mlWidth * mlHeight * 2; ++i) {
-      input->data.f[i] = (float)(img_buffer[i]);
+      //input->data.f[i] = (float)(img_buffer[i]);
+      input->data.int8[i] = img_buffer[i]; // currently an int8... but move to uint8
     }
+
+    // ********  Take Pix  ************//
+    //Serial.println((String)"Take a still");
+    int imageNumber = -1;
+#ifdef SAVEJPG
+      // Get still before inferance, but save after
+      unsigned long fileSave_ms = millis();
+      imageNumber = getStill();
+      unsigned long fileSaveTime_ms = millis() - fileSave_ms;
+      Serial.println((String)"FileSave time (ms): " + fileSaveTime_ms);
+#endif
 
 #ifdef DOINFER
     Serial.println((String)"Do inference");
@@ -517,19 +529,12 @@ void CamCB(CamImage img)
     //Serial.write(reSizedImg.getImgBuff(), imageSize);
 #endif
 
-    // ********  Take Pix  ************//
-    //Serial.println((String)"Take a still");
-    int imageNumber = -1;
+
     // Only take the picture if we have something.
 
     //if(maxIndex != 1) // We will also add a max threshold
     //{
-#ifdef SAVEJPG
-      unsigned long fileSave_ms = millis();
-      imageNumber = getStill();
-      unsigned long fileSaveTime_ms = millis() - fileSave_ms;
-      Serial.println((String)"FileSave time (ms): " + fileSaveTime_ms);
-#endif
+
     //}
 
 // We will move the inside the if maxIndex
