@@ -462,8 +462,8 @@ void CamCB(CamImage img)
     // From spresense_tf_mnist
     //Serial.println((String)"Put image in memory: " + mlWidth + "x"+ mlHeight );
     for (int i = 0; i < mlWidth * mlHeight * 2; ++i) {
-      //input->data.f[i] = (float)(img_buffer[i]);
-      input->data.uint8[i] = img_buffer[i]; // model exported with uint8
+      input->data.f[i] = (float)(img_buffer[i]);
+      //input->data.uint8[i] = img_buffer[i]; // model exported with uint8
     }
 
     Serial.println((String)"Do inference");
