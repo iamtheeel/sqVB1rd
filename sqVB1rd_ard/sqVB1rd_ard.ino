@@ -33,11 +33,7 @@
 // Self
 //#include "sqbCamera.h"
 
-// Set a debug
-// set a save file
-//#define STREAMRGB
-#define SAVEJPG
-#define DOINFER
+
 
 // Main Board Pins
 const uint8_t safeMode_pin = 1; //D1 (UART2_TX) Safe Boot
@@ -59,6 +55,8 @@ bool safeBoot = false;
 
 unsigned long miliSecTaskClock = 0;
 unsigned long uSSystemTaskClock = 0;
+unsigned long videoDelay_ms = 0;
+
 byte taskClockCycles25Hz = 0, taskClockCycles10Hz = 0, taskClockCycles5Hz, taskClockCycles1Hz = 0;
 
 //int everyNthImage = 5; // Slow down, try 1Hz
@@ -111,8 +109,8 @@ TfLiteTensor* output = nullptr;
 int inference_count = 0;
 
 // arena size used (you need to load to find out) + imgW*imgH*2 ...(was 3, but that is wrong, yes?)
-//constexpr int kTensorArenaSize = 350000;
-constexpr int kTensorArenaSize = 165840; // My LeNet from HW4 (400kb)
+constexpr int kTensorArenaSize = 350000;
+//constexpr int kTensorArenaSize = 165840; // My LeNet from HW4 (400kb)
 
 uint8_t tensor_arena[kTensorArenaSize];
 
@@ -177,7 +175,7 @@ void setup() {
     // This pulls in all the operation implementations we need.
      Serial.println((String)"Start resolver: ");
     //static tflite::AllOpsResolver resolver;
-    static tflite::MicroMutableOpResolver<8> resolver; // The number of adds
+    static tflite::MicroMutableOpResolver<9> resolver; // The number of adds
     resolver.AddMaxPool2D();
     resolver.AddConv2D();
     resolver.AddRelu();
@@ -186,7 +184,7 @@ void setup() {
     resolver.AddReshape();
     resolver.AddFullyConnected();
     resolver.AddDequantize();
-    //resolver.AddQuantize();
+    resolver.AddQuantize();
     RegisterDebugLogCallback(debug_log_printf);
 
     
@@ -411,6 +409,12 @@ void CamCB(CamImage img)
 {
   CamErr err;
 
+  //Don't fall behind.
+  unsigned long lastCamLoop_ms = millis() - videoDelay_ms;
+  if(lastCamLoop_ms < 25000){return;}
+  videoDelay_ms = millis();
+
+
   /* Check the img instance is available or not. */
   if (img.isAvailable()) // Turn the results off when thinking about it
   {
@@ -435,27 +439,31 @@ void CamCB(CamImage img)
     if (err != CAM_ERR_SUCCESS){printError(err);} // Image size must end up one of our good ones.
 
     //Serial.println((String)"Can we convert to to: CAM_IMAGE_PIX_FMT_JPG"); //No
-
     //Serial.println((String)"Convert the reSizedImg to: CAM_IMAGE_PIX_FMT_RGB565");
-//#define SHOWFULLRGB
-//#ifdef SHOWFULLRGB
-//    err =  img.convertPixFormat(CAM_IMAGE_PIX_FMT_RGB565);
-//    if (err != CAM_ERR_SUCCESS){printError(err);}
-//    uint8_t* img_buffer = img.getImgBuff();
-//    int imageSize = img.getImgSize();
-//#else
+    
+//#define STREAMRGB
+#define SAVEJPG
+#define DOINFER
+#define SHOWFULLRGB
+
+#ifdef SHOWFULLRGB
+    err =  img.convertPixFormat(CAM_IMAGE_PIX_FMT_RGB565);
+    if (err != CAM_ERR_SUCCESS){printError(err);}
+    uint8_t* img_buffer = img.getImgBuff();
+    int imageSize = img.getImgSize();
+#else
     err =  reSizedImg.convertPixFormat(CAM_IMAGE_PIX_FMT_RGB565);
     if (err != CAM_ERR_SUCCESS){printError(err);}
     uint8_t* img_buffer = reSizedImg.getImgBuff();
     int imageSize = reSizedImg.getImgSize();
-//#endif
+#endif
     
 
     // ********  Take Pix before inf so we have it ready to save ************//
     int imageNumber = -1;
 #ifdef SAVEJPG
       //Serial.println((String)"Take a still");
-      CamImage img =  theCamera.takePicture();
+      CamImage stillImg =  theCamera.takePicture();
 #endif
 
 #ifdef DOINFER
@@ -510,7 +518,7 @@ void CamCB(CamImage img)
 #ifdef SAVEJPG
       // Get still before inferance, but save after
       unsigned long fileSave_ms = millis();
-      imageNumber = saveStill(img);
+      imageNumber = saveStill(stillImg);
       unsigned long fileSaveTime_ms = millis() - fileSave_ms;
       Serial.println((String)"FileSave time (ms): " + fileSaveTime_ms);
 #endif
