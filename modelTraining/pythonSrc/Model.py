@@ -81,9 +81,6 @@ class MobileNetV3(nn.Module):
 class leNetV5(nn.Module):
     def __init__(self, input_shape: int, hidden_units: int, output_shape: int):
         """
-        Start Coding Here
-        """
-        """
         LeNet-5:
             Convolution kernal = 5x5, stride=1, tanh
             Pooling, kernal = 2x2, stride 2, tanh
@@ -141,9 +138,6 @@ class leNetV5(nn.Module):
 
 
     def forward(self, x: torch.Tensor):
-        """
-        Start Coding Here
-        """
         #x = self.layer(x)
         x = self.features(x)
         #x = self.hiddenLayer(x)
@@ -151,5 +145,123 @@ class leNetV5(nn.Module):
         #x = self.dropout(x)
         x = self.linear(x)
         x = self.clasifyer(x)
+
+        return x 
+
+class mobileNetV1(nn.Module):
+    def __init__(self, input_shape: int, output_shape: int):
+        super().__init__() 
+        outCh = 32
+        self.input = nn.Sequential(
+                            nn.Conv2d(in_channels=input_shape, out_channels=outCh, kernel_size=3, stride=2, padding=1, bias=False),
+                            nn.BatchNorm2d(outCh),
+                            nn.ReLU(),
+        )
+        inCh = 32
+        outCh = 64
+        self.conv32_64 = nn.Sequential(
+                            nn.Conv2d(in_channels=inCh, out_channels=inCh, kernel_size=3, stride=1, padding=1, bias=False),
+                            nn.BatchNorm2d(inCh),
+                            nn.ReLU(),
+                            nn.Conv2d(in_channels=inCh, out_channels=outCh, kernel_size=1, stride=1, padding=0, bias=False),
+                            nn.BatchNorm2d(outCh),
+                            nn.ReLU()
+        )
+        inCh = outCh
+        outCh = 128
+        self.conv64_128 = nn.Sequential(
+                            nn.Conv2d(in_channels=inCh, out_channels=inCh, kernel_size=3, stride=2, padding=1, bias=False),
+                            nn.BatchNorm2d(inCh),
+                            nn.ReLU(),
+                            nn.Conv2d(in_channels=inCh, out_channels=outCh, kernel_size=1, stride=1, padding=0, bias=False),
+                            nn.BatchNorm2d(outCh),
+                            nn.ReLU()
+        )
+        inCh = outCh
+        self.conv128_128 = nn.Sequential(
+                            nn.Conv2d(in_channels=inCh, out_channels=inCh, kernel_size=3, stride=1, padding=1, bias=False),
+                            nn.BatchNorm2d(inCh),
+                            nn.ReLU(),
+                            nn.Conv2d(in_channels=inCh, out_channels=outCh, kernel_size=1, stride=1, padding=0, bias=False),
+                            nn.BatchNorm2d(outCh),
+                            nn.ReLU()
+        )
+        outCh = 256
+        self.conv128_256 = nn.Sequential(
+                            nn.Conv2d(in_channels=inCh, out_channels=inCh, kernel_size=3, stride=2, padding=1, bias=False),
+                            nn.BatchNorm2d(inCh),
+                            nn.ReLU(),
+                            nn.Conv2d(in_channels=inCh, out_channels=outCh, kernel_size=1, stride=1, padding=0, bias=False),
+                            nn.BatchNorm2d(outCh),
+                            nn.ReLU()
+        )
+        inCh = outCh
+        self.conv256_256 = nn.Sequential(
+                            nn.Conv2d(in_channels=inCh, out_channels=inCh, kernel_size=3, stride=1, padding=1, bias=False),
+                            nn.BatchNorm2d(inCh),
+                            nn.ReLU(),
+                            nn.Conv2d(in_channels=inCh, out_channels=outCh, kernel_size=1, stride=1, padding=0, bias=False),
+                            nn.BatchNorm2d(outCh),
+                            nn.ReLU()
+        )
+        outCh = 512
+        self.conv256_512 = nn.Sequential(
+                            nn.Conv2d(in_channels=inCh, out_channels=inCh, kernel_size=3, stride=2, padding=1, bias=False),
+                            nn.BatchNorm2d(inCh),
+                            nn.ReLU(),
+                            nn.Conv2d(in_channels=inCh, out_channels=outCh, kernel_size=1, stride=1, padding=0, bias=False),
+                            nn.BatchNorm2d(outCh),
+                            nn.ReLU()
+        )
+        inCh = outCh
+        self.conv512_512 = nn.Sequential(
+                            nn.Conv2d(in_channels=inCh, out_channels=inCh, kernel_size=3, stride=1, padding=1, bias=False),
+                            nn.BatchNorm2d(inCh),
+                            nn.ReLU(),
+                            nn.Conv2d(in_channels=inCh, out_channels=outCh, kernel_size=1, stride=1, padding=0, bias=False),
+                            nn.BatchNorm2d(outCh),
+                            nn.ReLU()
+        )
+        outCh = 1024
+        self.conv512_1024 = nn.Sequential(
+                            nn.Conv2d(in_channels=inCh, out_channels=inCh, kernel_size=3, stride=2, padding=1, bias=False),
+                            nn.BatchNorm2d(inCh),
+                            nn.ReLU(),
+                            nn.Conv2d(in_channels=inCh, out_channels=outCh, kernel_size=1, stride=1, padding=0, bias=False),
+                            nn.BatchNorm2d(outCh),
+                            nn.ReLU()
+        )
+        inCh = outCh
+        self.conv1024_1024 = nn.Sequential(
+                            # note on final layer stride: https://github.com/CellEight/PytorchMobileNet-v1
+                            nn.Conv2d(in_channels=inCh, out_channels=inCh, kernel_size=3, stride=1, padding=1, bias=False),
+                            nn.BatchNorm2d(inCh),
+                            nn.ReLU(),
+                            nn.Conv2d(in_channels=inCh, out_channels=outCh, kernel_size=1, stride=1, padding=0, bias=False),
+                            nn.BatchNorm2d(outCh),
+                            nn.ReLU()
+        )
+
+        self.pool = nn.AdaptiveAvgPool2d(1) 
+        self.fullCon = nn.Linear(1024, output_shape) 
+
+    def forward(self, x: torch.Tensor):
+        x = self.input(x)
+        x = self.conv32_64(x)
+        x = self.conv64_128(x)
+        x = self.conv128_128(x)
+        x = self.conv128_256(x)
+        x = self.conv256_256(x)
+        x = self.conv256_512(x)
+        x = self.conv512_512(x) # 5x
+        x = self.conv512_512(x) # 5x
+        x = self.conv512_512(x) # 5x
+        x = self.conv512_512(x) # 5x
+        x = self.conv512_512(x) # 5x
+        x = self.conv512_1024(x) 
+        x = self.conv1024_1024(x) 
+        x = self.pool(x)
+        x = x.view(-1,1024) # Reshape to ?x1024
+        x = self.fullCon(x)
 
         return x 

@@ -36,8 +36,6 @@ def representative_dataset():
     ### Make a function
     imgW = 96
     imgH = 96
-    camWidth = 320 #QQVGA
-    camHeight = 240
 
     data = np.load("../output/representive_data.npy",allow_pickle=True) #Created in DataPreperation
     print(f"Data size: {data.shape}") # Batch size: 87, 2, 96, 96

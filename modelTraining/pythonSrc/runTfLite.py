@@ -4,8 +4,9 @@ import numpy as np
 
 #TFLITE_FILE_PATH = '../models/leNetV5_mod/16_inputFloat/leNetV5.tflite'
 #TFLITE_FILE_PATH = '../models/leNetV5_mod/17_onnx2tf/leNetV5_tf/leNetV5_dynamic_range_quant.tflite'
+TFLITE_FILE_PATH = '../models/leNetV5_mod/18_onnx2f-TFLiteConverter/leNetV5.tflite'
 #TFLITE_FILE_PATH = '../output/leNetV5_tf/leNetV5_dynamic_range_quant.tflite'
-TFLITE_FILE_PATH = '../output/leNetV5.tflite'
+#TFLITE_FILE_PATH = '../output/leNetV5.tflite'
 
 
 # Load the TFLite model in TFLite Interpreter
@@ -41,7 +42,7 @@ meta_config = config.get_config()["meta"]
 data_preparation = DataPreparation(meta_config["data_save_path"])
 train_data, test_data = data_preparation.get_data(displayImages=False)
 #model_labels = {0: 'Nobody', 1: 'Bird', 2: 'Squi'}
-dataloader = DataLoader(test_data,batch_size=25,shuffle=False)
+dataloader = DataLoader(train_data,batch_size=25,shuffle=False)
 for images, labels in dataloader:
     for i in range(len(images)-1):  
                                 #plt.imshow(images[i].permute(1, 2,0))

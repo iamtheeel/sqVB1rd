@@ -7,7 +7,7 @@ import os
 import sys
 import logging
 from DataPreparation import DataPreparation
-from Model import leNetV5, MobileNetV3, AlexNet
+from Model import leNetV5, MobileNetV3, AlexNet,  mobileNetV1
 from ConfigParser import ConfigParser
 from Trainer import Trainer
 from Logger import Logger
@@ -67,8 +67,8 @@ with open('../output/runSumary.csv', 'w', newline='') as csvfile: # make a new f
     csvWriter.writeheader()
 
 model_list = ["leNetV5"]
-#model_list = ["MobileNetV3"] # Cant Prune
-#model_list = ["AlexNet"]   # way too big
+#model_list = ["MobileNetV1"] 
+
 #model_list = ["leNetV5", "TinyVGG", "logisticRegression", "multilayerPerceptron"]
 nEpochs_list = [10]
 #nEpochs_list = [1, 10, 20]
@@ -95,6 +95,8 @@ for model_name in model_list:           # Set in model call
             model = MobileNetV3(num_classes=len(data_preparation.classes))
         elif model_name == "AlexNet":
             model = AlexNet(num_classes=len(data_preparation.classes))
+        elif model_name == "MobileNetV1":
+            model = mobileNetV1(input_shape=image_depth, output_shape=len(data_preparation.classes))
         else: 
             print(f"{model_name} is not a model that we have")
             exit()
