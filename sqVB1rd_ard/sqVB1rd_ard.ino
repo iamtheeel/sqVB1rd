@@ -246,6 +246,7 @@ void setup() {
     Serial.println("Set Daylight white balance parameter");
     err = theCamera.setAutoWhiteBalanceMode(CAM_WHITE_BALANCE_DAYLIGHT);
     if (err != CAM_ERR_SUCCESS){printError(err);}
+    /*
     //ISO
     Serial.println("Set Auto ISO");
     err = theCamera.setAutoISOSensitivity(true);
@@ -253,7 +254,7 @@ void setup() {
     Serial.println("Set Auto Exposure");
     err = theCamera.setAutoExposure(true);
     if (err != CAM_ERR_SUCCESS){printError(err);}
-
+    */
     // Still picture for save and to send to serial
     Serial.println((String)"Set still picture format: w =" + iWidth + ", h = " + iHeight);
     err = theCamera.setStillPictureImageFormat(iWidth, iHeight, CAM_IMAGE_PIX_FMT_JPG, 1); // JPEG Divisor requests less memory assuming good compresion, 1 = assume full image
@@ -437,15 +438,12 @@ void CamCB(CamImage img)
     //Serial.println((String)"Crop End (x, y): " + rightbottom_x + ", " + rightbottom_y);
     err = img.clipAndResizeImageByHW(reSizedImg, lefttop_x, lefttop_y, rightbottom_x, rightbottom_y, mlWidth, mlHeight); // Resize must be in CAM_IMAGE_PIX_FMT_YUV422
     if (err != CAM_ERR_SUCCESS){printError(err);} // Image size must end up one of our good ones.
-
     //Serial.println((String)"Can we convert to to: CAM_IMAGE_PIX_FMT_JPG"); //No
-    //Serial.println((String)"Convert the reSizedImg to: CAM_IMAGE_PIX_FMT_RGB565");
     
 //#define STREAMRGB
 #define SAVEJPG
 #define DOINFER
-#define SHOWFULLRGB
-
+//#define SHOWFULLRGB
 #ifdef SHOWFULLRGB
     err =  img.convertPixFormat(CAM_IMAGE_PIX_FMT_RGB565);
     if (err != CAM_ERR_SUCCESS){printError(err);}
@@ -473,7 +471,7 @@ void CamCB(CamImage img)
     // From spresense_tf_mnist
     //Serial.println((String)"Put image in memory: " + mlWidth + "x"+ mlHeight );
     for (int i = 0; i < mlWidth * mlHeight * 2; ++i) {
-      input->data.f[i] = (float)(img_buffer[i]);
+      input->data.f[i] = ((float)(img_buffer[i])/255);
       //input->data.uint8[i] = img_buffer[i]; // model exported with uint8
     }
 
