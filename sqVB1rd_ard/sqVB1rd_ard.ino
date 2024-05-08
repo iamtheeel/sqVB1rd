@@ -36,7 +36,6 @@
 // Set a debug
 // set a save file
 //#define STREAMRGB
-//#define SHOWFULLRGB
 #define SAVEJPG
 #define DOINFER
 
@@ -178,7 +177,7 @@ void setup() {
     // This pulls in all the operation implementations we need.
      Serial.println((String)"Start resolver: ");
     //static tflite::AllOpsResolver resolver;
-    static tflite::MicroMutableOpResolver<9> resolver; // The number of adds
+    static tflite::MicroMutableOpResolver<8> resolver; // The number of adds
     resolver.AddMaxPool2D();
     resolver.AddConv2D();
     resolver.AddRelu();
@@ -187,7 +186,7 @@ void setup() {
     resolver.AddReshape();
     resolver.AddFullyConnected();
     resolver.AddDequantize();
-    resolver.AddQuantize();
+    //resolver.AddQuantize();
     RegisterDebugLogCallback(debug_log_printf);
 
     
@@ -246,13 +245,16 @@ void setup() {
     
     
     // Auto white balance configuration //
-    Serial.println("Set Auto white balance parameter");
+    Serial.println("Set Daylight white balance parameter");
     err = theCamera.setAutoWhiteBalanceMode(CAM_WHITE_BALANCE_DAYLIGHT);
     if (err != CAM_ERR_SUCCESS){printError(err);}
-
     //ISO
-    //setAutoISOSensitivity(true)
-    //setAutoExposure(true)
+    Serial.println("Set Auto ISO");
+    err = theCamera.setAutoISOSensitivity(true);
+    if (err != CAM_ERR_SUCCESS){printError(err);}
+    Serial.println("Set Auto Exposure");
+    err = theCamera.setAutoExposure(true);
+    if (err != CAM_ERR_SUCCESS){printError(err);}
 
     // Still picture for save and to send to serial
     Serial.println((String)"Set still picture format: w =" + iWidth + ", h = " + iHeight);
@@ -435,17 +437,18 @@ void CamCB(CamImage img)
     //Serial.println((String)"Can we convert to to: CAM_IMAGE_PIX_FMT_JPG"); //No
 
     //Serial.println((String)"Convert the reSizedImg to: CAM_IMAGE_PIX_FMT_RGB565");
-#ifdef SHOWFULLRGB
-    err =  img.convertPixFormat(CAM_IMAGE_PIX_FMT_RGB565);
-    if (err != CAM_ERR_SUCCESS){printError(err);}
-    uint8_t* img_buffer = img.getImgBuff();
-    int imageSize = img.getImgSize();
-#else
+//#define SHOWFULLRGB
+//#ifdef SHOWFULLRGB
+//    err =  img.convertPixFormat(CAM_IMAGE_PIX_FMT_RGB565);
+//    if (err != CAM_ERR_SUCCESS){printError(err);}
+//    uint8_t* img_buffer = img.getImgBuff();
+//    int imageSize = img.getImgSize();
+//#else
     err =  reSizedImg.convertPixFormat(CAM_IMAGE_PIX_FMT_RGB565);
     if (err != CAM_ERR_SUCCESS){printError(err);}
     uint8_t* img_buffer = reSizedImg.getImgBuff();
     int imageSize = reSizedImg.getImgSize();
-#endif
+//#endif
     
 
     // ********  Take Pix before inf so we have it ready to save ************//
