@@ -4,7 +4,8 @@ import numpy as np
 
 #TFLITE_FILE_PATH = '../models/leNetV5_mod/16_inputFloat/leNetV5.tflite'
 #TFLITE_FILE_PATH = '../models/leNetV5_mod/17_onnx2tf/leNetV5_tf/leNetV5_dynamic_range_quant.tflite'
-TFLITE_FILE_PATH = '../output/leNetV5_tf/leNetV5_dynamic_range_quant.tflite'
+#TFLITE_FILE_PATH = '../output/leNetV5_tf/leNetV5_dynamic_range_quant.tflite'
+TFLITE_FILE_PATH = '../output/leNetV5.tflite'
 
 
 # Load the TFLite model in TFLite Interpreter

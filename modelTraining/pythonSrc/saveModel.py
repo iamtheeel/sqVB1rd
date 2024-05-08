@@ -39,11 +39,12 @@ def representative_dataset():
     camWidth = 320 #QQVGA
     camHeight = 240
 
-    data = np.load("representive_data.npy",allow_pickle=True) #Created in DataPreperation
+    data = np.load("../output/representive_data.npy",allow_pickle=True) #Created in DataPreperation
     print(f"Data size: {data.shape}") # Batch size: 87, 2, 96, 96
     for i in range(len(data)):
         temp_data = data[i]
-        temp_data = temp_data.reshape(1,2,imgW,imgH)# 2 is from RGB565, 2 bytes for 3 colors
+        temp_data = temp_data.reshape(1,imgW,imgH,2)# 2 is from RGB565, 2 bytes for 3 colors
+        #temp_data = temp_data.reshape(1,2,imgW,imgH)# 2 is from RGB565, 2 bytes for 3 colors
         yield [temp_data.astype(np.float32)]
 
 def saveModel(model, imgLayers, imgWidth, imgHeight, mean, std):
@@ -86,30 +87,7 @@ def saveModel(model, imgLayers, imgWidth, imgHeight, mean, std):
     tf_rep = onnx_tf.backend.prepare(onnx_model)
     tf_rep.export_graph(tfFile) # Export as tf
 
-
-    # Convert to TF Lite
-    tfLiteFileName = name+".tflite"
-    tfLiteFile = modelDir+"/"+tfLiteFileName
-    print(f"Saveing to Tensor FLow Lite: {tfLiteFile}")
-    converter = tensorflow.lite.TFLiteConverter.from_saved_model(tfFile)
-    # Some settings for the tfLite from MIC
-    converter.optimizations = [tensorflow.lite.Optimize.DEFAULT]
-    converter.representative_dataset = representative_dataset
-    converter.target_spec.supported_ops = [tensorflow.lite.OpsSet.TFLITE_BUILTINS_INT8]
-    converter.inference_input_type = tensorflow.float32  
-    #converter.inference_input_type = tensorflow.uint8  # this is giving headach
-    converter.inference_output_type = tensorflow.float32
-
-    tflite_model = converter.convert()
-    open(tfLiteFile, 'wb').write(tflite_model)
-    tflite_modelSize = len(tflite_model)
-
-    print(f"TF Lite model size: {tflite_modelSize} bytes")
     '''
-
-    # Convert to Tensor Flow using onnx2tf - https://github.com/PINTO0309/onnx2tf
-    #onnx2tf -i leNetV5.onnx -oiqt -cind representive_data.npy
-    #onnx2tf -i leNetV5.onnx -oiqt -cind "input" representive_data.npy "[[[[0.485,0.456,0.406]]]]" "[[[[0.229,0.224,0.225]]]]"
 
     #calibrationData=[ ["input", "data/calibdata.npy", [[[0.485,0.456,0.406]]], [[[0.229,0.224,0.225]]]] ]
     calibrationData=[ ["input", "../output/representive_data.npy", mean, std] ]
@@ -128,6 +106,28 @@ def saveModel(model, imgLayers, imgWidth, imgHeight, mean, std):
         copy_onnx_input_output_names_to_tflite=True,
         non_verbose=True,
     )
+    # Convert to TF Lite
+    tfLiteFile = modelDir+"/"+name+".tflite"
+    print(f"Saveing to Tensor FLow Lite: {tfLiteFile}")
+    converter = tensorflow.lite.TFLiteConverter.from_saved_model(tfFile)
+    # Some settings for the tfLite from MIC
+    converter.optimizations = [tensorflow.lite.Optimize.DEFAULT]
+    converter.representative_dataset = representative_dataset
+    converter.target_spec.supported_ops = [tensorflow.lite.OpsSet.TFLITE_BUILTINS_INT8]
+    converter.inference_input_type = tensorflow.float32  
+    #converter.inference_input_type = tensorflow.uint8  # this is giving headach
+    converter.inference_output_type = tensorflow.float32
+
+    tflite_model = converter.convert()
+    open(tfLiteFile, 'wb').write(tflite_model)
+    tflite_modelSize = len(tflite_model)
+
+    print(f"TF Lite model size: {tflite_modelSize} bytes")
+
+    # Convert to Tensor Flow using onnx2tf - https://github.com/PINTO0309/onnx2tf
+    #onnx2tf -i leNetV5.onnx -oiqt -cind representive_data.npy
+    #onnx2tf -i leNetV5.onnx -oiqt -cind "input" representive_data.npy "[[[[0.485,0.456,0.406]]]]" "[[[[0.229,0.224,0.225]]]]"
+
 
 
     ## The final step os 
