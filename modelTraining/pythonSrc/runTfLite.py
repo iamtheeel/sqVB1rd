@@ -30,7 +30,6 @@ print(f"Quantize info: {qPerams}")
 # Test the model on random input data.
 #input_data = np.array(np.random.random_sample(input_shape), dtype=np.uint8)
 
-
 # Use our dataloader
 from torch.utils.data import DataLoader
 from DataPreparation import DataPreparation
@@ -43,6 +42,7 @@ data_preparation = DataPreparation(meta_config["data_save_path"])
 train_data, test_data = data_preparation.get_data(displayImages=False)
 #model_labels = {0: 'Nobody', 1: 'Bird', 2: 'Squi'}
 dataloader = DataLoader(train_data,batch_size=25,shuffle=False)
+
 for images, labels in dataloader:
     for i in range(len(images)-1):  
                                 #plt.imshow(images[i].permute(1, 2,0))
