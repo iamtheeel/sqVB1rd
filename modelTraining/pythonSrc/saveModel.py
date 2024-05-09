@@ -146,11 +146,11 @@ def generateMeanStd():
             #print(f"img_data shape: {img_data.shape}")
             nImages += 1
             img_data = np.asarray(images[i], dtype=np.float32)
-            maxVal = np.max(img_data)
-            print(f"max value: {maxVal}")
             runningSum += img_data
-            if(i==1):
-                print(images[i])
+
+            #maxVal = np.max(img_data)
+            #print(f"max value: {maxVal}")
+            #if(i==1): print(images[i])
             #print(f"running sum: {runningSum[0, 0:4, 0]}") # make sure the images are different
 
     mean  = runningSum/nImages
@@ -172,12 +172,12 @@ def generateMeanStd():
     return mean, std
 
 mean, std = generateMeanStd()
-exit()
+#exit()
 from Model import leNetV5
 hiddenNerons = 30
 image_depth = 2
 print(f"Export presaved model")
 model = leNetV5(input_shape=image_depth,hidden_units=hiddenNerons,output_shape=3)
 thisMean = mean.mean()
-print(f"Mean, of mean: {thisMean}")
-#saveModel(model, image_depth, 96, 96, mean, std)
+#print(f"Mean, of mean: {thisMean}")
+saveModel(model, image_depth, 96, 96, mean, std)
