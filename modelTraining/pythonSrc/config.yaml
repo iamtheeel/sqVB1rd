@@ -14,8 +14,9 @@ model:
 
 meta:
   #data_save_path: "../../images/foo"
+  data_save_path: "../../images/240508"
   #data_save_path: "../../images/240507_3"
-  data_save_path: "../../images/240504_1/tagged" # the "good" training data
+  #data_save_path: "../../images/240504_1/tagged" # the "good" training data
   #data_save_path: "../240505_combined/"
   #data_save_path: "../data_trainSet1/"
   #data_save_path: "../data_shortSet/"

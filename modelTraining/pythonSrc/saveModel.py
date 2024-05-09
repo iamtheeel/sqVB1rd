@@ -90,8 +90,6 @@ def saveModel(model, imgLayers, imgWidth, imgHeight, mean, std):
     #calibrationData=[ ["input", "data/calibdata.npy", [[[0.485,0.456,0.406]]], [[[0.229,0.224,0.225]]]] ]
     calibrationData=[ ["input", "../output/representive_data.npy", mean, std] ]
 
-    #overwrite_input_shape = Union[List[str], NoneType] = None,
-
     import onnx2tf
     tfFile = modelDir+"/"+name+"_tf"
     print(f"Saveing to Tensor FLow: {tfFile} with onnx2tf")
@@ -99,7 +97,6 @@ def saveModel(model, imgLayers, imgWidth, imgHeight, mean, std):
         input_onnx_file_path=onnxFile,
         output_folder_path=tfFile,
         output_integer_quantized_tflite=True,
-        #overwrite_input_shape = input_shape,
         custom_input_op_name_np_data_path=calibrationData,
         copy_onnx_input_output_names_to_tflite=True,
         non_verbose=True,
@@ -121,10 +118,6 @@ def saveModel(model, imgLayers, imgWidth, imgHeight, mean, std):
     tflite_modelSize = len(tflite_model)
 
     print(f"TF Lite model size: {tflite_modelSize} bytes")
-
-    # Convert to Tensor Flow using onnx2tf - https://github.com/PINTO0309/onnx2tf
-    #onnx2tf -i leNetV5.onnx -oiqt -cind representive_data.npy
-    #onnx2tf -i leNetV5.onnx -oiqt -cind "input" representive_data.npy "[[[[0.485,0.456,0.406]]]]" "[[[[0.229,0.224,0.225]]]]"
 
 
 
@@ -153,7 +146,11 @@ def generateMeanStd():
             #print(f"img_data shape: {img_data.shape}")
             nImages += 1
             img_data = np.asarray(images[i], dtype=np.float32)
+            maxVal = np.max(img_data)
+            print(f"max value: {maxVal}")
             runningSum += img_data
+            if(i==1):
+                print(images[i])
             #print(f"running sum: {runningSum[0, 0:4, 0]}") # make sure the images are different
 
     mean  = runningSum/nImages
@@ -175,10 +172,12 @@ def generateMeanStd():
     return mean, std
 
 mean, std = generateMeanStd()
-#exit()
+exit()
 from Model import leNetV5
 hiddenNerons = 30
 image_depth = 2
 print(f"Export presaved model")
 model = leNetV5(input_shape=image_depth,hidden_units=hiddenNerons,output_shape=3)
-saveModel(model, image_depth, 96, 96, mean, std)
+thisMean = mean.mean()
+print(f"Mean, of mean: {thisMean}")
+#saveModel(model, image_depth, 96, 96, mean, std)

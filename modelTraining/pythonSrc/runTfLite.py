@@ -4,7 +4,8 @@ import numpy as np
 
 #TFLITE_FILE_PATH = '../models/leNetV5_mod/16_inputFloat/leNetV5.tflite'
 #TFLITE_FILE_PATH = '../models/leNetV5_mod/17_onnx2tf/leNetV5_tf/leNetV5_dynamic_range_quant.tflite'
-TFLITE_FILE_PATH = '../models/leNetV5_mod/18_onnx2f-TFLiteConverter/leNetV5.tflite'
+#TFLITE_FILE_PATH = '../models/leNetV5_mod/18_onnx2f-TFLiteConverter/leNetV5.tflite'
+TFLITE_FILE_PATH = '../models/leNetV5_mod/20_modifyedOnnx2TF/leNetV5.tflite'
 #TFLITE_FILE_PATH = '../output/leNetV5_tf/leNetV5_dynamic_range_quant.tflite'
 #TFLITE_FILE_PATH = '../output/leNetV5.tflite'
 
@@ -20,7 +21,7 @@ output_details = interpreter.get_output_details()
 
 input_type = input_details[0]['dtype']
 input_shape = input_details[0]['shape']
-print(f"Expected input. shape: {input_shape}, type: {input_type}")
+#print(f"Input shape: {input_shape}, type: {input_type}")
 
 qPerams = input_details[0]['quantization_parameters']['scales']
 #input_zPoint = input_details[0]['zero_points']
