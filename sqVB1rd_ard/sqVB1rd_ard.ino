@@ -47,19 +47,9 @@ const uint8_t squirrelLED_pin = LED2;  // 0x42, 66
 const uint8_t heartBeatLED_pin = LED3; // 0x43, 67
 
 
-/***      Timing       ***/
-// Heartbeat
-int runFreq = 250; // Hz
-unsigned long delayTime_us = 1e6/runFreq;
+/***      saveBoot       ***/
 bool safeBoot = false;
-
-unsigned long miliSecTaskClock = 0;
-unsigned long uSSystemTaskClock = 0;
 unsigned long videoDelay_ms = 0;
-
-byte taskClockCycles25Hz = 0, taskClockCycles10Hz = 0, taskClockCycles5Hz, taskClockCycles1Hz = 0;
-
-//int everyNthImage = 5; // Slow down, try 1Hz
 
 /***    Serial    ***/
 //#define BAUDRATE (921600)
@@ -276,67 +266,7 @@ void setup() {
   } // END SafeBoot
 }
 
-void loop() {
-  unsigned long miliSec = millis();
-  unsigned long microSec = micros();
-
-  if (microSec - uSSystemTaskClock >= delayTime_us) //Fast Settable Clock Run at runFreq Hz
-  {
-    uSSystemTaskClock = microSec;
-    /*
-     *  Main loop
-     *  Set runFreq = 200; // Hz
-     *  to the desired run frequency
-     */ 
-
-  }
-
-  if(miliSec - miliSecTaskClock >=10) // 100Hz loop
-  {
-    miliSecTaskClock = millis();
-    // *** 100Hz tasks go here
-
-
-  
-    if(taskClockCycles25Hz == 4) // 25Hz
-    {
-      taskClockCycles25Hz = 0;
-
-      if(safeBoot) {heartBeat(heartBeatLED_pin);}
-      //else{}
-    }
-    if (taskClockCycles10Hz == 10) // 10Hz 
-    {
-      taskClockCycles10Hz = 0;
-      //if(!safeBoot) {Serial.println((String) "High Mom: " + foo++);}
-    }
-    if (taskClockCycles5Hz == 20) // 5Hz 
-    {
-      taskClockCycles5Hz = 0;
-
-      if(!safeBoot) {
-        //heartBeat(heartBeatLED_pin); // Heart Beat when we are thinking
-      }
-      //else {; }
-    }
-
-    if (taskClockCycles1Hz == 100) // 1Hz 
-    {
-      taskClockCycles1Hz = 0;
-
-      if(!safeBoot) {
-        //getStill();
-      }
-
-      
-    }
-
-    taskClockCycles1Hz++;
-    taskClockCycles5Hz++;
-    taskClockCycles10Hz++;
-    taskClockCycles25Hz++;
-  } // safe boot
-}  // loop
+void loop() {}  // Everything is callback
 
 void heartBeat(int hbPin)
 {
@@ -412,7 +342,7 @@ void CamCB(CamImage img)
 
   //Don't fall behind.
   unsigned long lastCamLoop_ms = millis() - videoDelay_ms;
-  if(lastCamLoop_ms < 25000){return;}
+  if((lastCamLoop_ms < 25000) && (videoDelay_ms > 0)){return;}
   videoDelay_ms = millis();
 
 
@@ -471,9 +401,13 @@ void CamCB(CamImage img)
     // From spresense_tf_mnist
     //Serial.println((String)"Put image in memory: " + mlWidth + "x"+ mlHeight );
     for (int i = 0; i < mlWidth * mlHeight * 2; ++i) {
+        //Serial.print((String)img_buffer[i] + ", ");
+        //if(i%96 ==0){Serial.println();}
+      //input->data.f[i] = ((float)(img_buffer[i]));
       input->data.f[i] = ((float)(img_buffer[i])/255);
       //input->data.uint8[i] = img_buffer[i]; // model exported with uint8
     }
+    //Serial.println();
 
     Serial.println((String)"Do inference");
     unsigned long infStart_ms = millis();
