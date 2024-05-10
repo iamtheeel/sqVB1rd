@@ -77,6 +77,9 @@ const int vWidth = CAM_IMGSIZE_QVGA_H, vHeight = CAM_IMGSIZE_QVGA_V; // The bigg
 /***      File System     ***/
 SDClass  theSD;
 int take_picture_count = 0;
+char* bird = "Bird";
+char* nobody = "Nobody";
+char* squirrel = "Squirrel";
 
 // Logger
 char logFileName[16];
@@ -140,7 +143,10 @@ void setup() {
        delay(500);
     }
     Serial.println("SD card Mounted.");
-    
+    // set up file system
+    theSD.mkdir("/DCIM/Bird");
+    theSD.mkdir("/DCIM/Nobody");
+    theSD.mkdir("/DCIM/Squirrel");
 
     /***             Model setup  From Spresense_tf_mnist            ***/
     tflite::InitializeTarget();
@@ -211,7 +217,7 @@ void setup() {
     }while(theSD.exists(logFileName));
     Serial.println((String) ", file: " + logFileName);
     File myFile = theSD.open(logFileName, FILE_WRITE);
-    myFile.write("FileNum, Bird, None, squirrel\n");
+    myFile.write("FileNum, Bird, Nobody, Squirrel\n");
     myFile.close();
 
 
@@ -293,7 +299,7 @@ void setResultsLED(int8_t detect)
   }
 }
 
-int saveStill(CamImage img)
+int saveStill(CamImage img, uint8_t imageTag)
 {
   /* Check the img instance is available or not. */
   if (img.isAvailable())
@@ -308,17 +314,37 @@ int saveStill(CamImage img)
 
     // ********  Save The File  ************//
     // Save 
-    char filename[30] = {0};
-    // Create the dir...
-    do{ 
-      sprintf(filename, "DCIM/%05d.JPG", ++take_picture_count);    //DCIM/
-      //Serial.println((String) "Trying: " + filename);
-    }while(theSD.exists(filename));
+   
+    char filename[30] = {0}; // Max len is 21 char
+    if(take_picture_count <= 0)
+    {
+      Serial.println((String) "First Image on boot, find file count");
+      sprintf(filename, "/DCIM/%s/%05d.JPG", bird,take_picture_count);
+      while(theSD.exists(filename)){
+        sprintf(filename, "/DCIM/%s/%05d.JPG", bird, ++take_picture_count);
+      }   
+      
+      sprintf(filename, "/DCIM/%s/%05d.JPG", nobody, take_picture_count);
+      while(theSD.exists(filename)){
+        sprintf(filename, "/DCIM/%s/%05d.JPG", nobody, ++take_picture_count);
+      }
+      
+      sprintf(filename, "/DCIM/%s/%05d.JPG", squirrel, take_picture_count);
+      while(theSD.exists(filename)){
+        sprintf(filename, "/DCIM/%s/%05d.JPG", squirrel, ++take_picture_count);
+      }
+    } 
 
+    switch(imageTag)
+    {
+      case 0: sprintf(filename, "/DCIM/%s/%05d.JPG", bird, take_picture_count++); break;
+      case 2: sprintf(filename, "/DCIM/%s/%05d.JPG", squirrel, take_picture_count++); break;
+      default:sprintf(filename, "/DCIM/%s/%05d.JPG", nobody, take_picture_count++);         // Most will be nobody
+    }
+    
     Serial.println((String) "Save taken picture as " + filename);
-    //theSD.remove(filename); // Remove any file with that name in case there is a cockup
+    
     File myFile = theSD.open(filename, FILE_WRITE);
-    //Serial.println((String) "writing img");
     myFile.write(img.getImgBuff(), img.getImgSize());
     myFile.close();
   }
@@ -341,17 +367,31 @@ int saveStill(CamImage img)
 
 void CamCB(CamImage img)
 {
-  CamErr err;
+//#define STREAMRGB
+#define SAVEJPG
+#define DOINFER
+//#define SHOWFULLRGB
 
-  //Don't fall behind.
-  unsigned long lastCamLoop_ms = millis() - videoDelay_ms;
-  if((lastCamLoop_ms < 25000) && (videoDelay_ms > 0)){return;}
-  videoDelay_ms = millis();
 
+    // ********  Take Pix before anything so we have it ready to save ************//
+#ifdef SAVEJPG
+    //Serial.println((String)"Take a still");
+    CamImage stillImg =  theCamera.takePicture();
+#endif
 
   /* Check the img instance is available or not. */
   if (img.isAvailable()) // Turn the results off when thinking about it
   {
+    int imageNumber = -1;
+    CamErr err;
+
+#ifdef DOINFER
+    //Don't fall behind.
+    unsigned long lastCamLoop_ms = millis() - videoDelay_ms;
+    if((lastCamLoop_ms < 25000) && (videoDelay_ms > 0)){return;}
+    videoDelay_ms = millis();
+#endif
+
     digitalWrite(heartBeatLED_pin, true); // Heart Beat when we are thinking
     setResultsLED(-1);
 
@@ -373,10 +413,6 @@ void CamCB(CamImage img)
     if (err != CAM_ERR_SUCCESS){printError(err);} // Image size must end up one of our good ones.
     //Serial.println((String)"Can we convert to to: CAM_IMAGE_PIX_FMT_JPG"); //No
     
-//#define STREAMRGB
-#define SAVEJPG
-#define DOINFER
-//#define SHOWFULLRGB
 #ifdef SHOWFULLRGB
     err =  img.convertPixFormat(CAM_IMAGE_PIX_FMT_RGB565);
     if (err != CAM_ERR_SUCCESS){printError(err);}
@@ -390,12 +426,6 @@ void CamCB(CamImage img)
 #endif
     
 
-    // ********  Take Pix before inf so we have it ready to save ************//
-    int imageNumber = -1;
-#ifdef SAVEJPG
-      //Serial.println((String)"Take a still");
-      CamImage stillImg =  theCamera.takePicture();
-#endif
 
 #ifdef DOINFER
     // tensorflow inference code
@@ -403,7 +433,8 @@ void CamCB(CamImage img)
     // Send the camera buffer to the input stream
     // From spresense_tf_mnist
     //Serial.println((String)"Put image in memory: " + mlWidth + "x"+ mlHeight );
-    for (int i = 0; i < mlWidth * mlHeight * 2; ++i) {
+    for (int i = 0; i < mlWidth * mlHeight * 2; ++i) 
+    {
         //Serial.print((String)img_buffer[i] + ", ");
         //if(i%96 ==0){Serial.println();}
       //input->data.f[i] = ((float)(img_buffer[i]));
@@ -453,7 +484,7 @@ void CamCB(CamImage img)
 #ifdef SAVEJPG
       // Get still before inferance, but save after
       unsigned long fileSave_ms = millis();
-      imageNumber = saveStill(stillImg);
+      imageNumber = saveStill(stillImg, maxIndex);
       unsigned long fileSaveTime_ms = millis() - fileSave_ms;
       Serial.println((String)"FileSave time (ms): " + fileSaveTime_ms);
 #endif
@@ -475,13 +506,10 @@ void CamCB(CamImage img)
 
 
     // Only take the picture if we have something.
-
     //if(maxIndex != 1) // We will also add a max threshold
-    //{
+    //{}
 
-    //}
-
-// We will move the inside the if maxIndex
+    // We will move the inside the if maxIndex
     // ********  Save A Log  ************//
     // Log Contents: Save Number, confidence array
     File logFile = theSD.open(logFileName, FILE_WRITE);
