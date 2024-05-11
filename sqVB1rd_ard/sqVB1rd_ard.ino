@@ -41,7 +41,7 @@ const uint8_t safeMode_pin = 1; //D1 (UART2_TX) Safe Boot
 // Extension Board pins
 
 // Built in Leds
-const uint8_t nobodyLED_pin = LED0;    // 0x40, 64
+const uint8_t emptyLED_pin = LED0;    // 0x40, 64
 const uint8_t birdLED_pin = LED1;      // 0x41, 65
 const uint8_t squirrelLED_pin = LED2;  // 0x42, 66
 const uint8_t heartBeatLED_pin = LED3; // 0x43, 67
@@ -78,7 +78,7 @@ const int vWidth = CAM_IMGSIZE_QVGA_H, vHeight = CAM_IMGSIZE_QVGA_V; // The bigg
 SDClass  theSD;
 int take_picture_count = 0;
 char* bird = "Bird";
-char* nobody = "Nobody";
+char* empty = "Empty";
 char* squirrel = "Squirrel";
 
 // Logger
@@ -115,7 +115,7 @@ void setup() {
   // Safe Mode Pin setups
   pinMode(safeMode_pin, INPUT_PULLUP);     // Safe mode
 
-  pinMode(nobodyLED_pin, OUTPUT); //LED_BUILTIN
+  pinMode(emptyLED_pin, OUTPUT); //LED_BUILTIN
   pinMode(birdLED_pin, OUTPUT); //LED_BUILTIN
   pinMode(squirrelLED_pin, OUTPUT); //LED_BUILTIN
   pinMode(heartBeatLED_pin, OUTPUT); //LED_BUILTIN
@@ -145,7 +145,7 @@ void setup() {
     Serial.println("SD card Mounted.");
     // set up file system
     theSD.mkdir("/DCIM/Bird");
-    theSD.mkdir("/DCIM/Nobody");
+    theSD.mkdir("/DCIM/Empty");
     theSD.mkdir("/DCIM/Squirrel");
 
     /***             Model setup  From Spresense_tf_mnist            ***/
@@ -217,7 +217,7 @@ void setup() {
     }while(theSD.exists(logFileName));
     Serial.println((String) ", file: " + logFileName);
     File myFile = theSD.open(logFileName, FILE_WRITE);
-    myFile.write("FileNum, Bird, Nobody, Squirrel\n");
+    myFile.write("FileNum, Bird, Empty, Squirrel\n");
     myFile.close();
 
 
@@ -288,14 +288,14 @@ void heartBeat(int hbPin)
 void setResultsLED(int8_t detect)
 {
   // Set everybody off
-  digitalWrite(  nobodyLED_pin, false);
+  digitalWrite(  emptyLED_pin, false);
   digitalWrite(    birdLED_pin, false);
   digitalWrite(squirrelLED_pin, false);
 
   // Set our detect on
   // The pins are all in a row starting with "None"i
   if(detect > 0) {
-    digitalWrite(nobodyLED_pin + detect, true);
+    digitalWrite(emptyLED_pin + detect, true);
   }
 }
 
@@ -324,9 +324,9 @@ int saveStill(CamImage img, uint8_t imageTag)
         sprintf(filename, "/DCIM/%s/%05d.JPG", bird, ++take_picture_count);
       }   
       
-      sprintf(filename, "/DCIM/%s/%05d.JPG", nobody, take_picture_count);
+      sprintf(filename, "/DCIM/%s/%05d.JPG", empty, take_picture_count);
       while(theSD.exists(filename)){
-        sprintf(filename, "/DCIM/%s/%05d.JPG", nobody, ++take_picture_count);
+        sprintf(filename, "/DCIM/%s/%05d.JPG", empty, ++take_picture_count);
       }
       
       sprintf(filename, "/DCIM/%s/%05d.JPG", squirrel, take_picture_count);
@@ -339,7 +339,7 @@ int saveStill(CamImage img, uint8_t imageTag)
     {
       case 0: sprintf(filename, "/DCIM/%s/%05d.JPG", bird, take_picture_count++); break;
       case 2: sprintf(filename, "/DCIM/%s/%05d.JPG", squirrel, take_picture_count++); break;
-      default:sprintf(filename, "/DCIM/%s/%05d.JPG", nobody, take_picture_count++);         // Most will be nobody
+      default:sprintf(filename, "/DCIM/%s/%05d.JPG", empty, take_picture_count++);         // Most will be empty
     }
     
     Serial.println((String) "Save taken picture as " + filename);
@@ -474,7 +474,7 @@ void CamCB(CamImage img)
                           output->data.f[2] + "]" ); 
          if(maxIndex == 2){Serial.print((String)", Detected: Squirrel: " + maxValue); sqCount++;}
     else if(maxIndex == 0){Serial.print((String)", Detected: Bird: "     + maxValue); biCount++;}
-    else                  {Serial.print((String)", Detected: Nobody: "   + maxValue); nbCount++;}
+    else                  {Serial.print((String)", Detected: Empty: "   + maxValue); nbCount++;}
     Serial.println((String)" | Counts: " + biCount + ", " + nbCount + ", " + sqCount);
 
     // ********  Set LED Status  ************//
