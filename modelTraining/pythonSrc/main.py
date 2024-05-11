@@ -1,3 +1,17 @@
+###
+# saveModel.py
+#
+# Joshua Mehlman
+# ENGR 859 Spring 2024
+# Term Project
+#
+# Squirrl Or Bird Detector
+#
+###
+# Main training entry point
+###
+
+
 print(f"INIT: SQB, V0.1Alpha ")
 import torch
 import torch.nn as nn
@@ -70,14 +84,11 @@ model_list = ["leNetV5"]
 #model_list = ["MobileNetV1"] 
 
 #model_list = ["leNetV5", "TinyVGG", "logisticRegression", "multilayerPerceptron"]
-nEpochs_list = [10]
-#nEpochs_list = [1, 10, 20]
 NumHidden_list = [30]
-#NumHidden_list = [15, 30, 60]
+
+nEpochs_list = [8]
 lr_list = [0.01]
-#lr_list = [0.1, 0.01]
-bSize_list = [8]
-#bSize_list = [16, 32, 64]
+bSize_list = [16]
 
 runStartTime = timer()
 for model_name in model_list:           # Set in model call
@@ -162,10 +173,6 @@ fileName = name+".pth"
 modelFile = modelPath/fileName
 print(f"Saving PyTorch Model State Dict: {modelFile}")
 torch.save(obj=model.state_dict(), f=modelFile)
-#torch.save({"state_dict":model.state_dict()}, f=modelFile)
-
-#from saveModel import saveModel
-#saveModel(model=model, imgLayers=image_depth, imgWidth=image_width, imgHeight=image_height)
 
 
 # Figure out how to plot RGB565

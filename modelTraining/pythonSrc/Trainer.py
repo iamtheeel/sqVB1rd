@@ -93,7 +93,7 @@ class Trainer:
         plt.plot(range((epoch+1)*(batch+1)), lossArr)    
         plt.title("Training loss v Batch")
         plt.savefig("../output/trainingLoss.png")
-        #plt.show()
+        ##plt.show()
         return thisTrainLoss # Return the final training loss
     
     def test(self, classes):
@@ -130,6 +130,6 @@ class Trainer:
         plot_confusion_matrix(conf_mat=confMat_values.numpy(), class_names=classes)
         plt.title("Confusion Matrix")
         plt.savefig("../output/confMatrix.png")
-        #plt.show()
+        ##plt.show()
 
         return finalTestLoss, test_acc

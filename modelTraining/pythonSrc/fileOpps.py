@@ -7,17 +7,27 @@
 #
 # Squirrl Or Bird Detector
 #
+###
 # File operations to help with tagging
-#
+###
+
+
+
 # Rename files to include the run number
 import os, fnmatch, shutil
 from pathlib import Path
 from random import random
 
-moveFromCam = True
-testTrainSplit = False
+moveFromCam = False
+testTrainSplit = True\
 
-if moveFromCam:
+baseDir = "../../images/"
+#sqb = "Bird"
+sqb = "Empty"
+cull = True
+#sqb = "Squirrel"
+
+
     # Where our existing images are
     #runDir = "240406_0_shed"
     #runDir = "240406_1_shed2"
@@ -32,26 +42,34 @@ if moveFromCam:
     #runDir = "240409_2"
     #runDir = "240504_1"
     #runDir = "240505_2"
-    runDir = "240505_3"
+    #runDir = "240505_3"
+    #runDir = "240506"
+    #runDir = "240507_2"
+    #runDir = "240509_1"
+    #runDir = "240509_1"
+    #runDir = "240509_2"
+runDir = "240510"
 
+if moveFromCam:
+    inDir = baseDir+'/sucess/'+runDir +'/' + sqb
     #move data from photo folder to data dir
-    baseDir = "../../images"
-    inDir = baseDir+"/"+runDir+'/'+"DCIM"
-    outDir = baseDir+'/'+runDir+"/reNamedImages"
+    outDir = baseDir+'/sucess/combImages/' +sqb +'/'
+    #baseDir = "../../images/"
+    #inDir = baseDir+'/'+runDir +'/' + sqb
+    #outDir = baseDir+'/'+ runDir +'/reNamed/' +sqb +'/'
 
 if testTrainSplit:
-    splitPerc = 10
-    #sqb = "Bird"
-    #sqb = "Empty"
-    sqb = "Squirrel"
-    baseDir = "../data"
-    inDir = baseDir+'/all/' + sqb
-    outDir = baseDir+'/'
+    inDir = baseDir+'/TrainingTestSet/Combined/' +sqb
+    outDir = baseDir+'/TrainingTestSet/'
 
 # Make a new dir for Where we put the new images
 dirPath = Path(outDir)
 dirPath.mkdir(exist_ok=True)
 
+
+teCount = 0
+trCount = 0
+cuCount = 0
 
 listing = os.scandir(inDir)
 for file in listing:
@@ -61,13 +79,39 @@ for file in listing:
         if moveFromCam:
             newName_str = outDir+'/'+runDir+'-'+file.name
 
+        ## Todo, cut the number of Emptys
+
         if testTrainSplit:
             randNum = round(random()*100)
-            if(randNum <splitPerc):
-                testTrain = 'test'
+            # 10% to test
+            testPerc = 10
+
+            if cull:
+                # 99% to test
+                cullPerc = 90
+
+                if(randNum < cullPerc):
+                    testTrain = 'cull'
+                    cuCount += 1
+                elif(randNum < 92):
+                    testTrain = 'test'
+                    teCount += 1
+                else:
+                    trCount += 1
+                    testTrain = 'train'
             else:
-                testTrain = 'train'
+
+                if(randNum < testPerc):
+                    testTrain = 'test'
+                    teCount += 1
+                elif(randNum < 70):
+                    cuCount += 1
+                    testTrain = 'cull'
+                else:
+                    trCount += 1
+                    testTrain = 'train'
             newName_str = outDir+testTrain +'/' + sqb
 
-        shutil.copy2(imageFile_str, newName_str)
-        print(f"Copoy file: {imageFile_str} to: {newName_str}")
+        #shutil.copy2(imageFile_str, newName_str)
+        #print(f"Copy file: {imageFile_str} to: {newName_str}: {randNum}")
+print(f"train: {trCount}, test: {teCount}, cull: {cuCount}")
