@@ -484,7 +484,7 @@ void CamCB(CamImage img)
 #ifdef SAVEJPG
       // Get still before inferance, but save after
       unsigned long fileSave_ms = millis();
-      imageNumber = saveStill(stillImg, maxIndex);
+      imageNumber = saveStill(stillImg, maxIndex) -1; // we increment on the save
       unsigned long fileSaveTime_ms = millis() - fileSave_ms;
       Serial.println((String)"FileSave time (ms): " + fileSaveTime_ms);
 #endif
