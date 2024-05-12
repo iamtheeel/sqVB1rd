@@ -22,8 +22,8 @@ import tensorflow
 import torch
 
 # For representative_dataset
-import torchvision.transforms as trans
-from torchvision import datasets
+#import torchvision.transforms as trans
+#from torchvision import datasets
 
 
 ## add numbers
@@ -173,11 +173,12 @@ def generateMeanStd():
 
 mean, std = generateMeanStd()
 #exit()
-from Model import leNetV5
+from Model import leNetV5, mobileNetV1
 hiddenNerons = 30
 image_depth = 2
 print(f"Export presaved model")
-model = leNetV5(input_shape=image_depth,hidden_units=hiddenNerons,output_shape=3)
+model = mobileNetV1(input_shape=image_depth,output_shape=3)
+#model = leNetV5(input_shape=image_depth,hidden_units=hiddenNerons,output_shape=3)
 thisMean = mean.mean()
 #print(f"Mean, of mean: {thisMean}")
 saveModel(model, image_depth, 96, 96, mean, std)

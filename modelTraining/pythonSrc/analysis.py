@@ -29,8 +29,10 @@ import numpy as np
 showBadImage = False
 
 # Which runs do we want
-runDir = "sucess"
-logFileNameList = ["240509_1-13_log", "240509_1-17_log", "240509_1-19_log", "240509_2-3_log", "240510-1_log"]
+#runDir = "sucess"
+#logFileNameList = ["240509_1-13_log", "240509_1-17_log", "240509_1-19_log", "240509_2-3_log", "240510-1_log"]
+runDir = "retrained_LeNetV5"
+logFileNameList = ["2_log"]
 
 # Where our log files
 baseDir = "../../images"
@@ -69,9 +71,11 @@ for logFileName in logFileNameList:
     noneMaxImage = 0
     squiMaxImage = 0
 
+
     with open(logFileDirName) as logFile:
         logReader = csv.reader(logFile, delimiter=",")
         headder = next(logReader) # skip the headder
+
         for row in logReader:
             #FileNum, Bird, None, squirrel,manual tag
             imageNum = int(row[0])
@@ -118,6 +122,7 @@ for logFileName in logFileNameList:
                 preds.append(predict)
                 lables.append(manuaTag)
 
+
     #this log
     print(f"Label Counts, bird: {birdCount}, none: {noneCount}, squirll: {squiCount}")
     print(f"Max Confidences bird: {birdMax:.2f}, {birdMaxImage} none: {noneMax:.2f}, {noneMaxImage} squirll: {squiMax:.2f}, {squiMaxImage}")
@@ -130,7 +135,8 @@ for logFileName in logFileNameList:
     recal = sensitivity(torch.Tensor(predsThis), torch.Tensor(lablesThis))
 
     confMatrix.plot()
-    plt.title(f"{logFileName} \nSpecificity: {spec.numpy()}\nSensitivity: {recal.numpy()}")
+    #plt.title(f"{logFileName} \nSpecificity: {spec:.2f}\nRecal: {recal:.2f}")
+    plt.title(f"{logFileName} \nSpecificity: {spec.numpy()}\nRecal: {recal.numpy()}")
     cmFileDirName = logFileDir + 'CF_' + logFileName + '.png'
     plt.savefig(cmFileDirName)
     #plt.show()
@@ -141,12 +147,13 @@ for logFileName in logFileNameList:
 confMatrixData = metrics.confusion_matrix(lables, preds)
 confMatrix = metrics.ConfusionMatrixDisplay(confusion_matrix=confMatrixData, display_labels=classes)
 
-specificity = MulticlassSpecificity(num_classes=len(classes), average=None)
+specificity = MulticlassSpecificity(num_classes=len(classes), average='none')
 spec = specificity(torch.Tensor(preds), torch.Tensor(lables))
-sensitivity = MulticlassRecall(num_classes=len(classes), average=None)
+sensitivity = MulticlassRecall(num_classes=len(classes), average='none')
 recal = sensitivity(torch.Tensor(preds), torch.Tensor(lables))
 
 confMatrix.plot()
+#plt.title(f"Combined\nSpecificity: {spec:.2f}\nRecal: {recal:.2f}")
 plt.title(f"Combined\nSpecificity: {spec.numpy()}\nSensitivity: {recal.numpy()}")
 cmFileDirName = logFileDir + 'CF_combined.png'
 print(f"combined file name: {cmFileDirName}")
