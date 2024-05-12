@@ -88,9 +88,11 @@ char logFileName[16];
 /***      The Model      ***/
 //#include "model.h"
 //#include "leNetV5_mod.h"
-#include "RGB2BGR_leNetV5.h"
-//#include "BGR2BGR_leNetV5.h"
 //#include "leNetV5.h"
+//#include "BGR2BGR_leNetV5.h" ///No
+//#include "RGB2BGR_leNetV5.h"
+#include "RGB2BGRleNetV5_trained.h"
+
 
 const int nClasses = 3; // Bird, Nothing, Squirrel
 
