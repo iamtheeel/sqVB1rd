@@ -301,7 +301,7 @@ void setResultsLED(int8_t detect)
   }
 }
 
-int saveStill(CamImage img, uint8_t imageTag)
+int saveStill(CamImage img, int8_t imageTag)
 {
   /* Check the img instance is available or not. */
   if (img.isAvailable())
@@ -316,32 +316,32 @@ int saveStill(CamImage img, uint8_t imageTag)
 
     // ********  Save The File  ************//
     // Save 
-   
     char filename[30] = {0}; // Max len is 21 char
-    if(take_picture_count <= 0)
+    char birdFilename[30] = {0}; // Max len is 21 char
+    char noneFilename[30] = {0}; // Max len is 21 char
+    char squiFilename[30] = {0}; // Max len is 21 char
+    if(take_picture_count <= 0) // Find the save number
     {
       Serial.println((String) "First Image on boot, find file count");
-      sprintf(filename, "/DCIM/%s/%05d.JPG", bird,take_picture_count);
-      while(theSD.exists(filename)){
-        sprintf(filename, "/DCIM/%s/%05d.JPG", bird, ++take_picture_count);
+      sprintf(filename, "/DCIM/%05d.JPG",  ++take_picture_count);
+      sprintf(birdFilename, "/DCIM/%s/%05d.JPG", bird,take_picture_count);
+      sprintf(noneFilename, "/DCIM/%s/%05d.JPG", empty,take_picture_count);
+      sprintf(squiFilename, "/DCIM/%s/%05d.JPG", squirrel,take_picture_count);
+
+      while(theSD.exists(birdFilename) || theSD.exists(birdFilename) || theSD.exists(noneFilename)|| theSD.exists(squiFilename)){
+        sprintf(filename, "/DCIM/%05d.JPG",  ++take_picture_count);
+        sprintf(birdFilename, "/DCIM/%s/%05d.JPG", bird,take_picture_count);
+        sprintf(noneFilename, "/DCIM/%s/%05d.JPG", empty,take_picture_count);
+        sprintf(squiFilename, "/DCIM/%s/%05d.JPG", squirrel,take_picture_count);
       }   
-      
-      sprintf(filename, "/DCIM/%s/%05d.JPG", empty, take_picture_count);
-      while(theSD.exists(filename)){
-        sprintf(filename, "/DCIM/%s/%05d.JPG", empty, ++take_picture_count);
-      }
-      
-      sprintf(filename, "/DCIM/%s/%05d.JPG", squirrel, take_picture_count);
-      while(theSD.exists(filename)){
-        sprintf(filename, "/DCIM/%s/%05d.JPG", squirrel, ++take_picture_count);
-      }
     } 
 
     switch(imageTag)
     {
       case 0: sprintf(filename, "/DCIM/%s/%05d.JPG", bird, take_picture_count++); break;
+      case 1: sprintf(filename, "/DCIM/%s/%05d.JPG", empty, take_picture_count++); break;
       case 2: sprintf(filename, "/DCIM/%s/%05d.JPG", squirrel, take_picture_count++); break;
-      default:sprintf(filename, "/DCIM/%s/%05d.JPG", empty, take_picture_count++);         // Most will be empty
+      default:sprintf(filename, "/DCIM/%05d.JPG", take_picture_count++);         // Most will be empty
     }
     
     Serial.println((String) "Save taken picture as " + filename);
@@ -486,7 +486,8 @@ void CamCB(CamImage img)
 #ifdef SAVEJPG
       // Get still before inferance, but save after
       unsigned long fileSave_ms = millis();
-      imageNumber = saveStill(stillImg, maxIndex) -1; // we increment on the save
+      imageNumber = saveStill(stillImg, -1) -1; // -1 to save all the images in one dir
+      //imageNumber = saveStill(stillImg, maxIndex) -1; // we increment on the save
       unsigned long fileSaveTime_ms = millis() - fileSave_ms;
       Serial.println((String)"FileSave time (ms): " + fileSaveTime_ms);
 #endif
