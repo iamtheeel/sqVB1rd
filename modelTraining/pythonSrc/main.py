@@ -80,8 +80,8 @@ with open('../output/runSumary.csv', 'w', newline='') as csvfile: # make a new f
     csvWriter = csv.DictWriter(csvfile, fieldnames=csvColNames)
     csvWriter.writeheader()
 
-#model_list = ["leNetV5"]
-model_list = ["MobileNetV1"] 
+model_list = ["leNetV5"]
+#model_list = ["MobileNetV1"] 
 
 #model_list = ["leNetV5", "TinyVGG", "logisticRegression", "multilayerPerceptron"]
 NumHidden_list = [30]
@@ -128,7 +128,7 @@ for model_name in model_list:           # Set in model call
         testImSz = len(testImage)
 
         modelSum = summary(model=model, 
-            input_size=(32, image_depth, image_width, image_height), # make sure this is "input_size", not "input_shape"
+            input_size=(1, image_depth, image_width, image_height), # make sure this is "input_size", not "input_shape"
             # col_names=["input_size"], # uncomment for smaller output
             col_names=["input_size", "output_size", "num_params", "trainable"],
             col_width=20,

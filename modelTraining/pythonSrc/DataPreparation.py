@@ -29,7 +29,7 @@ class DataPreparation:
 
     def get_data(self, displayImages=False):
         Trans = trans.Compose([
-            #trans.Resize((self.camHeight, self.camWidth)), #Resize is H/w
+            trans.Resize((self.camHeight, self.camWidth)), #Resize is H/w
             trans.CenterCrop(self.width),
             RGB2RGB565(),
             trans.ToTensor()

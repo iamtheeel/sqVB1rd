@@ -30,11 +30,6 @@
 #include "tensorflow/lite/micro/spresense/debug_log_callback.h"
 
 
-// Self
-//#include "sqbCamera.h"
-
-
-
 // Main Board Pins
 const uint8_t safeMode_pin = 1; //D1 (UART2_TX) Safe Boot
 

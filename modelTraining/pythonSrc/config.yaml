@@ -18,6 +18,6 @@ meta:
   #data_save_path: "../../images/240507_3"
   #data_save_path: "../../images/240504_1/tagged" # the "good" training data with the augmented images
   #data_save_path: "../240505_combined/"
-  #data_save_path: "../data_trainSet1/"
+  #data_save_path: "../data_trainSet1/" # 3MP training images
   #data_save_path: "../data_shortSet/"
   data_save_path: "../../images/TrainingTestSet" # gathered with our first good model

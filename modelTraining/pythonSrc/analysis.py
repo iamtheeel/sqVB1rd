@@ -1,5 +1,5 @@
 ###
-# saveModel.py
+# analysis.py
 #
 # Joshua Mehlman
 # ENGR 859 Spring 2024
@@ -19,9 +19,7 @@
 import csv
 import matplotlib.pyplot as plt
 import torch
-from torchmetrics import  ConfusionMatrix
 from torchmetrics.classification import MulticlassSpecificity, MulticlassRecall
-#from mlxtend.plotting import plot_confusion_matrix
 from sklearn import metrics 
 import numpy as np
 
