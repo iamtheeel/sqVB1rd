@@ -102,8 +102,8 @@ TfLiteTensor* output = nullptr;
 int inference_count = 0;
 
 // arena size used (you need to load to find out) + imgW*imgH*2 ...(was 3, but that is wrong, yes?)
-constexpr int kTensorArenaSize = 350000;
-//constexpr int kTensorArenaSize = 165840; // My LeNet from HW4 (400kb)
+//constexpr int kTensorArenaSize = 350000;
+constexpr int kTensorArenaSize = 165840; // My LeNet from HW4 (400kb)
 
 uint8_t tensor_arena[kTensorArenaSize];
 

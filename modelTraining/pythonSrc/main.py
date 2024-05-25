@@ -80,13 +80,13 @@ with open('../output/runSumary.csv', 'w', newline='') as csvfile: # make a new f
     csvWriter = csv.DictWriter(csvfile, fieldnames=csvColNames)
     csvWriter.writeheader()
 
-model_list = ["leNetV5"]
-#model_list = ["MobileNetV1"] 
+#model_list = ["leNetV5"]
+model_list = ["MobileNetV1"] 
 
 #model_list = ["leNetV5", "TinyVGG", "logisticRegression", "multilayerPerceptron"]
 NumHidden_list = [30]
 
-nEpochs_list = [1]
+nEpochs_list = [10]
 lr_list = [0.01]
 bSize_list = [16]
 #bSize_list = [16]
