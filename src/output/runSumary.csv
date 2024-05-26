@@ -1,0 +1,2 @@
+model,epochs,lr,batchSize,MACs,modelPerams,trainTimeStr,trainTimeS,trainLoss,testLoss,testAcc
+leNetV5,1,0.01,16,22304008.0,475313.0,0:00:05,5.537570666987449,0.9689287174689142,0.9418377009305087,na
