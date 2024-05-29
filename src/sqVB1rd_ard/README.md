@@ -1,18 +1,21 @@
-Includes:
-The Spresens Tensor Flow Build does not have logging information. Use the build from the Mobile and Intelligent Computing Laboratory http://sfsu-miclab.org/
-https://github.com/miclab-sfsu/CNN-KeywordSpotting-On-Device-ML/blob/main/keywordspotting_sonyspresense/keywordspotting_sonyspresense.ino
-- MIC Spresense TensorFlow: Add to Additional Boards manager, then select board
-  https://github.com/zhenyulincs/Sony-Spresense-Arduino-TFMicro/releases/download/2.0/package_spresense_local_index.json
+Note: 
+The Spresens Tensor Flow Build does not have logging information. Use the build from the Mobile and Intelligent Computing Laboratory http://sfsu-miclab.org/ <br>
+https://github.com/miclab-sfsu/CNN-KeywordSpotting-On-Device-ML/blob/main/keywordspotting_sonyspresense/keywordspotting_sonyspresense.ino <br>
+- Add the following to to Additional Boards manager https://github.com/zhenyulincs/Sony-Spresense-Arduino-TFMicro/releases/download/2.0/package_spresense_local_index.json
+- Select the SFSU-MICLab SPRESENSE_Tensorflow board
+- Librarys used:
+  - Camera.h
+  - SDHCI.h (The SD Card)
+  - Tensorflow:
+    - tensorflow/lite/micro/micro_mutable_op_resolver.h
+    - tensorflow/lite/micro/micro_interpreter.h
+    - tensorflow/lite/micro/system_setup.h
+    - tensorflow/lite/micro/spresense/debug_log_callback.h
+    - tensorflow/lite/schema/schema_generated.h
+      
+Settings:
+- Tools, Memory, Set to Max (1,536 kB)
+- Tools, Upload Speed, Set to Max (1,152,000). Not required, but 1.5MB takes a while to upload.
 
-
-From:
-https://www.hackster.io/taroyoshino007/get-started-with-tensorflow-lite-micro-by-sony-spresense-e92bf1#toc-setup-the-environment-for-arduino-sketch-3
-    Suspresce TensorFlow Board https://raw.githubusercontent.com/YoshinoTaro/spresense-arduino-tensorflow/main/package_spresense_tensorflow_index.json
-        Use board manager
-
-    BmpImage_ArduinoLib
-        Git clode into Arduino/libraryhs
-
-From
-https://github.com/bitbank2/JPEGENC
-    Arduino lib manager
+Serial Comms:
+- 1,000,000 8-N-1. We want this FAST for when we stream BMPs Can be changed in the code, but this is the fastest that the Arduino Serial Monitor uses, and its conviniant to use the built in as it automaticly disconnects for you on upload. 
