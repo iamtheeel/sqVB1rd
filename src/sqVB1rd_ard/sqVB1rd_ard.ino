@@ -44,7 +44,6 @@ const uint8_t heartBeatLED_pin = LED3; // 0x43, 67
 
 /***      saveBoot       ***/
 bool safeBoot = false;
-unsigned long videoDelay_ms = 0;
 
 /***    Serial    ***/
 //#define BAUDRATE (921600)
@@ -299,15 +298,15 @@ int saveStill(CamImage img, int8_t imageTag)
   if (img.isAvailable())
   {
     // ********  Send To JPEG to the Serial Port  ************//
-    //iSize = (int) img.getImgBuffSize();
+    /*
     int imageSize = img.getImgSize();
-    //Serial.println((String)"SIZE:" + imageSize);
-    //Serial.println((String)"START");
-    //Serial.write(img.getImgBuff(), imageSize);
-
+    Serial.println((String)"SIZE:" + imageSize);
+    Serial.println((String)"START");
+    Serial.write(img.getImgBuff(), imageSize);
+    */
 
     // ********  Save The File  ************//
-    // Save 
+    // Find us the save number. 
     char filename[30] = {0}; // Max len is 21 char
     char birdFilename[30] = {0}; // Max len is 21 char
     char noneFilename[30] = {0}; // Max len is 21 char
@@ -375,17 +374,7 @@ void CamCB(CamImage img)
   {
     int imageNumber = -1;
     CamErr err;
-
-#ifdef DOINFER
-    //Don't fall behind.
-    unsigned long lastCamLoop_ms = millis() - videoDelay_ms;
-    if((lastCamLoop_ms < 25000) && (videoDelay_ms > 0)){return;}
-    videoDelay_ms = millis();
-#endif
-
-    digitalWrite(heartBeatLED_pin, true); // Heart Beat when we are thinking
     setResultsLED(-1);
-
     
     // Resize (and shape?) The image. Lets see if we can trim it.
     //Serial.println((String)"Resize the image");
@@ -417,7 +406,7 @@ void CamCB(CamImage img)
 #endif
     
 
-
+    digitalWrite(heartBeatLED_pin, true); // Heart Beat when we are thinking
 #ifdef DOINFER
     // tensorflow inference code
     // Expecting CAM_IMAGE_PIX_FMT_RGB565
@@ -441,6 +430,8 @@ void CamCB(CamImage img)
     unsigned long inferenceTime_ms = millis() - infStart_ms;
     Serial.println((String)"Inference time (ms): " + inferenceTime_ms);
 #endif
+    digitalWrite(heartBeatLED_pin, false); // the on time is the save/strem time.. and the 5Hz
+
 
    //Serial.println((String)"Gather Results");
     uint8_t maxIndex = 0;               // Variable to store the index of the highest value
@@ -454,7 +445,6 @@ void CamCB(CamImage img)
       }
     }
 
-    digitalWrite(heartBeatLED_pin, false); // the on time is the save/strem time.. and the 5Hz
     // ********  Echo results  ************//
     static int biCount = 0;
     static int nbCount = 0;
